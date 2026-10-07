@@ -1,0 +1,27 @@
+server:
+  port: ${BACKEND_PORT:8080}
+
+spring:
+  application:
+    name: career-recommendation-system
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:career_recommendation_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+# JWT Configuration placeholders
+security:
+  jwt:
+    secret: ${JWT_SECRET:default_development_secret_key_to_be_replaced_with_env_var}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
