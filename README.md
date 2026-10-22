@@ -75,15 +75,15 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 
 ## 4. Tài liệu dự án & Hướng dẫn kỹ thuật (Documentation Links)
 
-* **Quy tắc làm việc cho AI Agent:** [`AI_RULES.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md)
-* **Tổng quan hệ thống tài liệu:** [`docs/README.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/README.md)
-* **Kiến trúc hệ thống & Luồng tuần tự:** [`docs/architecture/system-architecture.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/architecture/system-architecture.md)
-* **Hợp đồng REST API (MVP):** [`docs/api/api-contract.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/api/api-contract.md)
-* **Thiết kế Cơ sở dữ liệu (PostgreSQL + Flyway):** [`docs/database/database-design.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/database/database-design.md)
-* **Kế hoạch phát triển Tuần 2–5 (6 thành viên):** [`docs/planning/week-2-5-backlog.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/planning/week-2-5-backlog.md)
-* **Quy trình Git & PR Checklist:** [`docs/development/git-workflow.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md)
-* **Quy chuẩn lập trình:** [`docs/development/coding-conventions.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md)
-* **Quyết định kiến trúc ADR:** [`docs/decisions/README.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/README.md)
+* **Quy tắc làm việc cho AI Agent:** [`AI_RULES.md`](AI_RULES.md)
+* **Tổng quan hệ thống tài liệu:** [`docs/README.md`](docs/README.md)
+* **Kiến trúc hệ thống & Luồng tuần tự:** [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md)
+* **Hợp đồng REST API (MVP):** [`docs/api/api-contract.md`](docs/api/api-contract.md)
+* **Thiết kế Cơ sở dữ liệu (PostgreSQL + Flyway):** [`docs/database/database-design.md`](docs/database/database-design.md)
+* **Kế hoạch phát triển Tuần 2–5 (6 thành viên):** [`docs/planning/week-2-5-backlog.md`](docs/planning/week-2-5-backlog.md)
+* **Quy trình Git & PR Checklist:** [`docs/development/git-workflow.md`](docs/development/git-workflow.md)
+* **Quy chuẩn lập trình:** [`docs/development/coding-conventions.md`](docs/development/coding-conventions.md)
+* **Quyết định kiến trúc ADR:** [`docs/decisions/README.md`](docs/decisions/README.md)
 
 ---
 

@@ -32,7 +32,7 @@ Trước khi tạo file mới, lập trình viên / AI agent phải kiểm tra x
 
 ## 3. Cấu trúc bắt buộc của một DevLog
 
-Mỗi DevLog phải được khởi tạo từ mẫu [**`DEVLOG-TEMPLATE.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/DEVLOG-TEMPLATE.md) và bao gồm đầy đủ 6 phần:
+Mỗi DevLog phải được khởi tạo từ mẫu [**`DEVLOG-TEMPLATE.md`**](./DEVLOG-TEMPLATE.md) và bao gồm đầy đủ 6 phần:
 1. **Mục tiêu (Objective):** Lý do thực hiện tác vụ.
 2. **Thay đổi thực tế (Changes):** Những gì đã thực sự được thay đổi trong mã nguồn, cấu hình, và tài liệu chuẩn.
 3. **Khu vực bị ảnh hưởng (Affected Areas):** Danh sách đường dẫn file liên quan.
@@ -46,5 +46,6 @@ Mỗi DevLog phải được khởi tạo từ mẫu [**`DEVLOG-TEMPLATE.md`**](
 
 | Ngày | File DevLog | Tác vụ | Người thực hiện |
 |---|---|---|---|
-| 2026-10-09 | [**`2026-10-09-init-ai-rules-and-docs.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-09-init-ai-rules-and-docs.md) | Thiết lập AI Guardrails và Hệ thống tài liệu sống (Living Documentation System) | Antigravity AI Agent |
-| 2026-10-22 | [**`2026-10-22-resolve-week-1-task-1.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-22-resolve-week-1-task-1.md) | Giải quyết toàn diện các hạng mục tồn đọng Tuần 1 Tác vụ 1 (Resolve Week 1 Task 1) | Antigravity AI Assistant |
+| 2026-10-09 | [**`2026-10-09-init-ai-rules-and-docs.md`**](./2026-10-09-init-ai-rules-and-docs.md) | Thiết lập AI Guardrails và Hệ thống tài liệu sống (Living Documentation System) | Antigravity AI Agent |
+| 2026-10-22 | [**`2026-10-22-resolve-week-1-task-1.md`**](./2026-10-22-resolve-week-1-task-1.md) | Giải quyết toàn diện các hạng mục tồn đọng Tuần 1 Tác vụ 1 (Resolve Week 1 Task 1) | Antigravity AI Assistant |
+| 2026-10-23 | [**`2026-10-23-week-1-decisions-and-task-mapping.md`**](./2026-10-23-week-1-decisions-and-task-mapping.md) | Ghi nhận quyết định kỹ thuật Tuần 1 và Ánh xạ tài liệu nguồn cho Task 2–6 và Backlog Tuần 2–5 | Antigravity AI Assistant |
