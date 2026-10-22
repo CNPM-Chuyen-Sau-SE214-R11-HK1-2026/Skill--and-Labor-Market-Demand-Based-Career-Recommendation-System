@@ -112,3 +112,8 @@ frontend/build/
 .docker/
 docker-compose.override.yml
 *.log
+
+# =============================================================================
+# Project Reference Materials (excluded from version control)
+# =============================================================================
+/ADDITIONAL_DOC/

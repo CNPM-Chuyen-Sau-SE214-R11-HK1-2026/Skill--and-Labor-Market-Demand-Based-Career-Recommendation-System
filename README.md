@@ -23,6 +23,16 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 
 ```text
 .
+├── docs/                       # Hệ thống tài liệu sống (Living Documentation)
+│   ├── README.md               # Điều hướng trung tâm toàn bộ tài liệu
+│   ├── architecture/           # Kiến trúc hệ thống & Sequence diagrams
+│   ├── api/                    # Hợp đồng REST API chi tiết (MVP)
+│   ├── database/               # Thiết kế CSDL (ERD, Data Dictionary, Indexing)
+│   ├── planning/               # Kế hoạch phát triển và Backlog Tuần 2–5
+│   ├── development/            # Git workflow, coding conventions, môi trường
+│   ├── decisions/              # Architectural Decision Records (ADR-0001, ADR-0002)
+│   └── devlogs/                # Nhật ký phát triển theo tác vụ
+│
 ├── frontend/                   # Ứng dụng Frontend (React + TypeScript)
 │   ├── public/                 # Tài nguyên tĩnh
 │   ├── src/                    # Mã nguồn chính (App, Components, v.v.)
@@ -32,7 +42,7 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 │   ├── tsconfig.json           # Cấu hình TypeScript
 │   └── vite.config.ts          # Cấu hình Vite bundler
 │
-├── backend/                    # Ứng dụng Backend (Spring Boot + Java)
+├── backend/                    # Ứng dụng Backend (Spring Boot + Java 17)
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/cnpm/careerrecommendation/
@@ -44,24 +54,40 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 │   │   │   │   ├── service/    # Business Services & Interfaces
 │   │   │   │   └── CareerRecommendationApplication.java # Entry point
 │   │   │   └── resources/
-│   │   │       └── application.yml # Cấu hình môi trường Spring Boot
+│   │   │       ├── application.yml # Cấu hình môi trường Spring Boot
+│   │   │       └── db/migration/   # Flyway SQL migration scripts (V1__...)
 │   │   └── test/               # Unit & Integration Tests
 │   ├── Dockerfile              # Multi-stage Dockerfile cho Backend
-│   └── pom.xml                 # Cấu hình Maven dependencies
+│   └── pom.xml                 # Cấu hình Maven dependencies & Flyway
 │
 ├── docker/                     # Tài liệu và tài nguyên hỗ trợ Docker
 │   └── README.md
 │
+├── AI_RULES.md                 # Quy tắc bắt buộc cho AI Agents và cộng tác viên
 ├── .env.example                # Mẫu khai báo biến môi trường
 ├── .gitignore                  # Cấu hình loại trừ file của Git
 ├── docker-compose.yml          # Điều phối các dịch vụ Docker (PostgreSQL, Backend, Frontend)
 ├── LICENSE                     # Giấy phép mã nguồn mở (MIT)
-└── README.md                   # Tài liệu hướng dẫn dự án
+└── README.md                   # Tài liệu hướng dẫn dự án (file này)
 ```
 
 ---
 
-## 4. Yêu cầu môi trường (Prerequisites)
+## 4. Tài liệu dự án & Hướng dẫn kỹ thuật (Documentation Links)
+
+* **Quy tắc làm việc cho AI Agent:** [`AI_RULES.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md)
+* **Tổng quan hệ thống tài liệu:** [`docs/README.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/README.md)
+* **Kiến trúc hệ thống & Luồng tuần tự:** [`docs/architecture/system-architecture.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/architecture/system-architecture.md)
+* **Hợp đồng REST API (MVP):** [`docs/api/api-contract.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/api/api-contract.md)
+* **Thiết kế Cơ sở dữ liệu (PostgreSQL + Flyway):** [`docs/database/database-design.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/database/database-design.md)
+* **Kế hoạch phát triển Tuần 2–5 (6 thành viên):** [`docs/planning/week-2-5-backlog.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/planning/week-2-5-backlog.md)
+* **Quy trình Git & PR Checklist:** [`docs/development/git-workflow.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md)
+* **Quy chuẩn lập trình:** [`docs/development/coding-conventions.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md)
+* **Quyết định kiến trúc ADR:** [`docs/decisions/README.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/README.md)
+
+---
+
+## 5. Yêu cầu môi trường (Prerequisites)
 
 Để chạy dự án ở môi trường cục bộ, máy tính cần cài đặt các công cụ sau:
 
@@ -73,7 +99,7 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 
 ---
 
-## 5. Hướng dẫn phát triển cục bộ (Local Development)
+## 6. Hướng dẫn phát triển cục bộ (Local Development)
 
 ### Bước 1: Khởi tạo biến môi trường
 
@@ -109,7 +135,7 @@ Frontend sẽ khởi chạy tại `http://localhost:3000`.
 
 ---
 
-## 6. Khởi chạy bằng Docker (Docker Deployment)
+## 7. Khởi chạy bằng Docker (Docker Deployment)
 
 Hệ thống hỗ trợ chạy toàn bộ dịch vụ (PostgreSQL, Spring Boot Backend, React Frontend) thông qua Docker Compose:
 

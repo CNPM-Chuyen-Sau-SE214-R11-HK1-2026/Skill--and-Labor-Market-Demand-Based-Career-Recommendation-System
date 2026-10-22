@@ -101,3 +101,11 @@ Trước khi gửi Pull Request hoặc hoàn tất một tác vụ, lập trình
 | **Chạy kiểm thử Backend** | `backend/` | `mvn test` | `BUILD SUCCESS` (0 failures, 0 errors) |
 | **Cú pháp Docker Compose** | Thư mục gốc | `docker compose config` | File cấu hình hợp lệ, exit code 0 |
 | **Kiểm tra trạng thái Git** | Thư mục gốc | `git status` | Không có file rác, file `.env` không bị track |
+
+---
+
+## 6. Quy chuẩn phối hợp và Phong cách lập trình
+
+Để đảm bảo chất lượng kỹ thuật đồng đều giữa 06 thành viên và các AI agent:
+* [**Quy trình làm việc với Git & Kiểm soát mã nguồn (`git-workflow.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md): Mô hình phân nhánh Trunk-based + Feature branch, quy chuẩn Conventional Commits, mẫu PR checklist và chính sách review.
+* [**Quy chuẩn viết mã & Kiến trúc phần mềm (`coding-conventions.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md): Quy chuẩn phân chia package Java/Spring Boot theo Domain, quy ước JPA Entity, kiến trúc thư mục Frontend React/TypeScript và nguyên tắc Clean Code.
