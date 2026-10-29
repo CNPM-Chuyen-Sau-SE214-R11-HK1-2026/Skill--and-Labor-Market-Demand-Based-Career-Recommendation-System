@@ -26,6 +26,21 @@ spring:
     baseline-version: 0
     locations: classpath:db/migration
 
+  jackson:
+    date-format: "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+
+# CORS Configuration
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600
+
 # JWT Configuration placeholders
 security:
   jwt:
