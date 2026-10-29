@@ -13,6 +13,13 @@
 
 ## 1. Ma trận phân công trách nhiệm đội ngũ (RACI / Ownership Matrix)
 
+**Lưu ý phân công hiện hành W1 (2026-10-29):** Excel `CNPM Chuyên Sâu - Nhóm 4.xlsx`,
+sheet `Task`, giao **W1-T5 — Xác thực và phân quyền JWT cho Đoàn Việt Khang**.
+Bản bàn giao này hoàn thành phạm vi W1-T5, không coi các task frontend W2–W5
+của Việt Khang bên dưới là đã hoàn tất. Bảng dưới vẫn lưu kế hoạch Tuần 2–5.
+Tham khảo [hướng dẫn W1-T5](../development/w1-t5-auth-guide.md).
+
+
 Căn cứ theo Bảng 1 trong tài liệu đồ án chính thức:
 
 | STT | Thành viên | Mã số SV | Vai trò chính | Phạm vi phụ trách kỹ thuật (Domain Ownership) |

@@ -48,3 +48,5 @@ Mỗi DevLog phải được khởi tạo từ mẫu [**`DEVLOG-TEMPLATE.md`**](
 |---|---|---|---|
 | 2026-10-09 | [**`2026-10-09-init-ai-rules-and-docs.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-09-init-ai-rules-and-docs.md) | Thiết lập AI Guardrails và Hệ thống tài liệu sống (Living Documentation System) | Antigravity AI Agent |
 | 2026-10-22 | [**`2026-10-22-resolve-week-1-task-1.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-22-resolve-week-1-task-1.md) | Giải quyết toàn diện các hạng mục tồn đọng Tuần 1 Tác vụ 1 (Resolve Week 1 Task 1) | Antigravity AI Assistant |
+
+| 2026-10-29 | [2026-10-29-w1-t5-jwt-auth-viet-khang.md](2026-10-29-w1-t5-jwt-auth-viet-khang.md) | W1-T5 — JWT/Auth/RBAC | Đoàn Việt Khang / Codex |
