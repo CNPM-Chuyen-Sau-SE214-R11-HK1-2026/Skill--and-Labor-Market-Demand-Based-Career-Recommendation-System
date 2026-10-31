@@ -6,7 +6,7 @@
 Chào mừng bạn đến với hệ thống tài liệu sống (Living Documentation System) của dự án. Thư mục này lưu trữ toàn bộ tri thức của dự án từ nghiên cứu học thuật, yêu cầu nghiệp vụ, kiến trúc hệ thống, thiết kế cơ sở dữ liệu, đặc tả API, quyết định kỹ thuật cho đến nhật ký phát triển theo từng tác vụ.
 
 > [!IMPORTANT]
-> **Quy định bắt buộc:** Mọi cộng tác viên và AI agent khi làm việc trong repository này đều phải đọc và tuân thủ tuyệt đối quy định tại [**`AI_RULES.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md).
+> **Quy định bắt buộc:** Mọi cộng tác viên và AI agent khi làm việc trong repository này đều phải đọc và tuân thủ tuyệt đối quy định tại [**`AI_RULES.md`**](../AI_RULES.md).
 
 ---
 
@@ -86,16 +86,16 @@ Hệ thống tuân thủ nghiêm ngặt **nguyên tắc chống bịa đặt (An
 
 ## 4. Danh mục tài liệu tham chiếu nhanh (Quick Links)
 
-* **Quy tắc làm việc cho AI:** [`AI_RULES.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md)
-* **Tổng quan dự án:** [`docs/project-overview.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/project-overview.md)
-* **Khảo sát & Yêu cầu:** [`docs/requirements/current-state.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/requirements/current-state.md)
-* **Actor & Use Case:** [`docs/requirements/actors-and-use-cases.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/requirements/actors-and-use-cases.md)
-* **Kiến trúc hệ thống:** [`docs/architecture/system-architecture.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/architecture/system-architecture.md)
-* **Cơ sở dữ liệu:** [`docs/database/database-design.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/database/database-design.md)
-* **Hợp đồng REST API (MVP):** [`docs/api/api-contract.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/api/api-contract.md)
-* **Kế hoạch phát triển Tuần 2–5:** [`docs/planning/week-2-5-backlog.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/planning/week-2-5-backlog.md)
-* **Quy trình Git & PR Checklist:** [`docs/development/git-workflow.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md)
-* **Quy chuẩn lập trình:** [`docs/development/coding-conventions.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md)
-* **Hướng dẫn phát triển & Docker:** [`docs/development/README.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/README.md)
-* **Mẫu DevLog:** [`docs/devlogs/DEVLOG-TEMPLATE.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/DEVLOG-TEMPLATE.md)
-* **Mẫu ADR:** [`docs/decisions/ADR-TEMPLATE.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/ADR-TEMPLATE.md)
+* **Quy tắc làm việc cho AI:** [`AI_RULES.md`](../AI_RULES.md)
+* **Tổng quan dự án:** [`docs/project-overview.md`](./project-overview.md)
+* **Khảo sát & Yêu cầu:** [`docs/requirements/current-state.md`](./requirements/current-state.md)
+* **Actor & Use Case:** [`docs/requirements/actors-and-use-cases.md`](./requirements/actors-and-use-cases.md)
+* **Kiến trúc hệ thống:** [`docs/architecture/system-architecture.md`](./architecture/system-architecture.md)
+* **Cơ sở dữ liệu:** [`docs/database/database-design.md`](./database/database-design.md)
+* **Hợp đồng REST API (MVP):** [`docs/api/api-contract.md`](./api/api-contract.md)
+* **Kế hoạch phát triển Tuần 2–5:** [`docs/planning/week-2-5-backlog.md`](./planning/week-2-5-backlog.md)
+* **Quy trình Git & PR Checklist:** [`docs/development/git-workflow.md`](./development/git-workflow.md)
+* **Quy chuẩn lập trình:** [`docs/development/coding-conventions.md`](./development/coding-conventions.md)
+* **Hướng dẫn phát triển & Docker:** [`docs/development/README.md`](./development/README.md)
+* **Mẫu DevLog:** [`docs/devlogs/DEVLOG-TEMPLATE.md`](./devlogs/DEVLOG-TEMPLATE.md)
+* **Mẫu ADR:** [`docs/decisions/ADR-TEMPLATE.md`](./decisions/ADR-TEMPLATE.md)

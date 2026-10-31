@@ -2,8 +2,8 @@
 
 **Dự án:** Skill- and Labor Market Demand–Based Career Recommendation System
 *(Hệ thống gợi ý nghề nghiệp dựa trên kỹ năng cá nhân và nhu cầu thị trường lao động)*
-**Trạng thái:** Kiến trúc mục tiêu cho Tuần 2–5; auth W1-T5 đã triển khai, các module còn lại chưa được xác nhận hoàn thành.
-**Tài liệu tham chiếu chuẩn:** [`ADDITIONAL_DOC/Báo cáo đồ án.docx`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/requirements/current-state.md), [`AI_RULES.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md)
+**Trạng thái:** Hoàn thiện cho phát triển song song Tuần 2–5 (Production-Ready Architecture)
+**Tài liệu tham chiếu chuẩn:** [`ADDITIONAL_DOC/Báo cáo đồ án.docx`](../requirements/current-state.md), [`AI_RULES.md`](../../AI_RULES.md)
 
 ---
 
@@ -75,6 +75,8 @@ graph TD
     Modules -->|Spring Data JPA / HikariCP| PostgresDB
 ```
 
+* **Kiểm tra trạng thái dịch vụ (Service Health Check - GAP-02):** Module dùng chung (`common`) cung cấp endpoint công khai `GET /api/health` trả về `{"status": "UP"}` với mã `200 OK`, đóng vai trò là điểm kiểm tra tình trạng sống (liveness probe) tức thời cho Docker Compose, Nginx và Frontend mà không phụ thuộc CSDL.
+
 ---
 
 ## 3. Đặc tả ranh giới phân hệ & Trách nhiệm thành viên (Module Boundaries)
@@ -141,7 +143,7 @@ sequenceDiagram
     else Xác thực thành công
         AuthSvc-->>AuthCtrl: Authentication Object (Principal, Roles)
         AuthCtrl->>TokenProv: generateToken(authentication)
-        TokenProv-->>AuthCtrl: JWT Token String (24h validity)
+        TokenProv-->>AuthCtrl: JWT Token String (24h validity, claims: sub, userId, role)
         AuthCtrl-->>UI: 200 OK {accessToken, tokenType: "Bearer", expiresIn, user}
         UI->>UI: Lưu token vào LocalStorage/Memory, gắn vào Axios Interceptor
         UI-->>User: Điều hướng vào Dashboard

@@ -45,6 +45,10 @@ module/profile/
 └── dto/                   # Request/Response Data Transfer Objects (ưu tiên Java 17 Record)
 ```
 
+> [!NOTE]
+> **Quy định chuyển dịch từ mã nguồn khởi tạo (Starter Skeleton) sang Domain Modules (GAP-03):**
+> Trong bước khởi tạo dự án ban đầu (Week 1 Task 3), backend được sinh với cấu trúc package dạng phẳng cơ bản (`controller`, `entity`, `repository`, `service`). Kể từ Tuần 2 trở đi, **toàn bộ mã nguồn tính năng mới bắt buộc phải được tổ chức vào các package module theo đúng phân hệ nghiệp vụ** (`com.cnpm.careerrecommendation.module.<domain>.*` với `<domain>` gồm `auth`, `profile`, `taxonomy`, `lmi`, `recommendation`). Các lớp khởi tạo khung trước đó sẽ được refactor chuyển về domain module tương ứng khi từng thành viên tiếp quản hiện thực hóa task liên quan.
+
 ### 2.2. Quy ước đặt tên trong Java
 * **Lớp (Class) & Giao diện (Interface):** Viết `PascalCase`.
   - Service: `CandidateProfileService`, `CandidateProfileServiceImpl`
@@ -71,7 +75,33 @@ module/profile/
 
 ### 2.5. Xử lý ngoại lệ tập trung (Centralized Exception Handling)
 * Kế thừa từ một lớp ngoại lệ nghiệp vụ nền tảng: `ApiException(HttpStatus status, String errorCode, String message)`.
-* Xử lý tại [`GlobalExceptionHandler`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/api/api-contract.md) bằng `@RestControllerAdvice` và luôn trả về cấu trúc `ErrorResponse` chuẩn.
+* Xử lý tại [`GlobalExceptionHandler`](../api/api-contract.md#12-cấu-trúc-phản-hồi-lỗi-chuẩn-standard-error-response) bằng `@RestControllerAdvice` và luôn trả về cấu trúc `ErrorResponse` chuẩn.
+
+### 2.6. Điểm kiểm tra trạng thái dịch vụ chuẩn (Backend Health Endpoint - GAP-02)
+* **Đường dẫn chuẩn:** `GET /api/health`
+* **Quyền truy cập:** Công khai (`Public`), cấu hình `permitAll()` trong Spring Security, không yêu cầu JWT Bearer Token.
+* **Cấu trúc phản hồi:** Luôn trả về HTTP `200 OK` với thân JSON nhẹ:
+  ```json
+  {
+    "status": "UP"
+  }
+  ```
+* **Ràng buộc kiến trúc:**
+  - Endpoint này phản hồi trạng thái sẵn sàng (liveness/readiness) nhanh chóng, không phụ thuộc vào kết nối cơ sở dữ liệu PostgreSQL.
+  - Endpoint này hoàn toàn độc lập và tách biệt với các endpoint nội bộ của Spring Boot Actuator (`/actuator/health`).
+  - Được sử dụng làm mục tiêu kiểm tra sức khỏe dịch vụ cho Docker Compose (`healthcheck`), Nginx Reverse Proxy và Frontend khởi động.
+
+### 2.7. Chuẩn hóa JWT Claims & Nguyên tắc phân quyền (JWT Claims Standards - GAP-04)
+* **Cấu trúc Payload Token:** Mọi token xác thực JWT phát hành từ hệ thống bắt buộc sử dụng chính xác các claim chuẩn hóa sau:
+  * `sub` (`String`): Email định danh người dùng (theo RFC 7519), tương ứng với `users.email`.
+  * `userId` (`Long`): Khóa chính bản ghi trong bảng `users` (`users.id`).
+  * `role` (`String`): Vai trò bảo mật kèm tiền tố `ROLE_` (`ROLE_CANDIDATE` hoặc `ROLE_ADMIN`).
+* **Thời gian hiệu lực (Expiration):** Mặc định 24 giờ (86.400.000 ms).
+* **Khóa bí mật ký số (Secret Key):** Nạp qua biến môi trường `JWT_SECRET` (đảm bảo độ dài tối thiểu 256-bit cho thuật toán `HS256`, kèm fallback dự phòng phục vụ phát triển cục bộ).
+* **Xác thực và phân quyền phía Server:**
+  * Bộ lọc `JwtAuthenticationFilter` giải mã token, đọc claim `role` và ánh xạ trực tiếp sang `SimpleGrantedAuthority(role)`.
+  * **Tuyệt đối không nối thêm hoặc nhân bản tiền tố `ROLE_`** khi tạo `GrantedAuthority` (vì giá trị claim `role` đã chứa sẵn tiền tố này).
+  * Trích xuất `userId` và `sub` từ token để thiết lập đối tượng Principal xác thực trong `SecurityContextHolder`.
 
 ### 2.6. Phạm vi W1-T5 và phối hợp nền tảng
 
@@ -141,3 +171,39 @@ frontend/src/
 3. **Giao tiếp API tập trung:**
    * Không gọi trực tiếp `fetch()` hoặc `axios.get()` phân tán trong các component. Mọi lệnh gọi API phải thông qua các hàm đóng gói trong thư mục `services/`.
    * Luôn xử lý các trạng thái: `isLoading`, `isError`, và hiển thị thông báo lỗi thân thiện.
+
+### 3.3. Quy chuẩn cấu hình API Client & Đường dẫn cơ sở (Frontend API Base URL - GAP-01)
+1. **Biến môi trường Base URL:**
+   * Frontend cấu hình URL cơ sở của backend thông qua biến môi trường Vite:
+     ```env
+     VITE_API_BASE_URL=http://localhost:8080/api/v1
+     ```
+   * Truy xuất trong mã nguồn TypeScript thông qua: `import.meta.env.VITE_API_BASE_URL`.
+2. **Quy tắc gọi API tập trung qua Axios Client:**
+   * Toàn bộ các service gọi API trong `frontend/src/services/` phải sử dụng Axios instance đã được gán sẵn `baseURL`:
+     ```typescript
+     // src/services/api.ts
+     import axios from 'axios';
+
+     export const apiClient = axios.create({
+       baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+     });
+     ```
+   * **Nghiêm cấm lặp lại tiền tố `/api/v1` trong các hàm service:**
+     * Đúng: `apiClient.get('/occupations')`, `apiClient.post('/auth/login', credentials)`.
+     * Sai (bị lặp URL thành `/api/v1/api/v1/...`): `apiClient.get('/api/v1/occupations')`.
+   * **Ngoại lệ Health Check:** Nếu frontend cần kiểm tra trạng thái sống của backend tại `GET /api/health` (không thuộc tiền tố `/api/v1`), hãy gọi qua Axios instance riêng biệt không tiền tố hoặc sử dụng URL tương đối `axios.get('/api/health')`.
+
+### 3.4. Quy chuẩn định kiểu giao diện Frontend (Frontend Styling Convention - Decision 5)
+1. **Công nghệ định kiểu áp dụng:**
+   * Cho phép và khuyến nghị sử dụng **Plain CSS chuẩn** kết hợp với **CSS Modules** (`[ComponentName].module.css`).
+   * **Không bắt buộc cài đặt hoặc sử dụng Tailwind CSS** trong phạm vi dự án 5 tuần nhằm giảm thiểu độ phức tạp cấu hình build, tránh xung đột phong cách và tối ưu thời gian phát triển song song của 02 thành viên Frontend.
+2. **Tổ chức mã nguồn CSS & Themes:**
+   * Mỗi UI component có thể đi kèm một file CSS Module cùng tên (ví dụ: `JobCard.tsx` đi kèm `JobCard.module.css`) để đóng gói kiểu dáng cục bộ (Scoped Styles), tránh việc trùng lặp tên class toàn cục.
+   * **Quy chuẩn biến dùng chung & Theme:** Tổ chức toàn bộ CSS biến toàn cục, bảng màu, typography và kiểu dáng dùng chung trong thư mục `frontend/src/styles/`:
+     * `frontend/src/styles/variables.css`: Khai báo CSS Custom Properties (`--color-primary`, `--color-background`, `--border-radius`, `--font-family`, `--spacing-unit`).
+     * `frontend/src/styles/global.css`: Reset CSS, thiết lập font chữ nền tảng và kiểu dáng toàn trang.
+   * Import `global.css` và `variables.css` một lần duy nhất tại `frontend/src/main.tsx`.

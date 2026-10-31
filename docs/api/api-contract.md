@@ -50,6 +50,25 @@ Mọi phản hồi lỗi (HTTP status $\ge 400$) trả về định dạng thố
 
 ## 2. Danh mục chi tiết các Endpoint (Endpoint Specifications)
 
+### 2.0. Điểm kiểm tra trạng thái dịch vụ (System Health Check - `/api/health`)
+
+#### `GET /api/health`
+* **Mã thao tác (Operation ID):** `healthCheck`
+* **Mô tả:** Kiểm tra trạng thái hoạt động cơ bản của hệ thống backend. Endpoint này phản hồi tức thời mà không phụ thuộc vào kết nối cơ sở dữ liệu PostgreSQL và độc lập hoàn toàn với các endpoint nội bộ của Spring Boot Actuator.
+* **Đường dẫn (Path):** `/api/health` *(Lưu ý: Endpoint này nằm trực tiếp tại root `/api/health`, không nằm dưới tiền tố phiên bản `/api/v1`)*.
+* **Module chịu trách nhiệm:** `common`
+* **Quyền truy cập:** Công khai (`Public`) - Không yêu cầu JWT Token.
+* **Request Body:** Không có.
+* **Phản hồi thành công (`200 OK`):**
+  ```json
+  {
+    "status": "UP"
+  }
+  ```
+* **Mã lỗi dự kiến:** Endpoint này luôn phản hồi HTTP 200 `{"status": "UP"}` khi tiến trình Spring Boot đang chạy và sẵn sàng tiếp nhận kết nối HTTP.
+
+---
+
 ### 2.1. Phân hệ Xác thực & Tài khoản (`/api/v1/auth`)
 
 **Trạng thái triển khai:** Ba endpoint auth dưới đây đã có mã nguồn. Các endpoint
@@ -132,6 +151,21 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Mã lỗi dự kiến:**
   * `400 Bad Request`: Thiếu email hoặc mật khẩu.
   * `401 Unauthorized`: Sai thông tin đăng nhập hoặc tài khoản bị khóa.
+
+* **Đặc tả cấu trúc JWT Payload Claims chuẩn hóa (GAP-04):**
+  Khi xác thực thành công, access token trả về là một JSON Web Token (JWT) được ký bằng thuật toán HMAC-SHA256 (`HS256`) với khóa bí mật cấu hình qua biến môi trường `JWT_SECRET` (kèm fallback mặc định phục vụ phát triển cục bộ). Thời gian hiệu lực mặc định của token là 24 giờ (86.400.000 ms).
+  Payload của JWT bắt buộc chứa chính xác 3 claim chuẩn hóa sau:
+
+  | Tên Claim | Kiểu dữ liệu | Mô tả | Ví dụ giá trị | Ghi chú & Tiêu chuẩn sử dụng |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `sub` | `String` | Email định danh của người dùng (Subject) | `"candidate@example.com"` | Khóa email chuẩn theo RFC 7519, dùng cho Spring Security `UserDetails.getUsername()` |
+  | `userId` | `Long` (Numeric) | Khóa chính của người dùng trong CSDL (`users.id`) | `1` | Dùng để định danh thực thể hồ sơ (`candidate_profiles.user_id`), trích xuất an toàn phía backend |
+  | `role` | `String` | Vai trò bảo mật kèm tiền tố `ROLE_` | `"ROLE_CANDIDATE"` hoặc `"ROLE_ADMIN"` | Đánh giá phân quyền trực tiếp qua `SimpleGrantedAuthority(role)`. Không nhân bản hay ghép thêm tiền tố `ROLE_` |
+
+* **Nguyên tắc tạo và tiêu thụ Token (Token Generation & Consumption Rules):**
+  - **Phía Backend khi phát hành token:** `JwtTokenProvider` bắt buộc đặt đúng 3 khóa claim `sub`, `userId`, `role`.
+  - **Phía Backend khi xác thực request:** `JwtAuthenticationFilter` giải mã token, đọc `role` trực tiếp đưa vào `GrantedAuthority` mà không nối thêm tiền tố `ROLE_` (do `role` đã chứa sẵn tiền tố này), trích xuất `userId` và `sub` phục vụ gắn vào `UsernamePasswordAuthenticationToken`.
+  - **Phía Frontend:** Có thể decode payload để lấy `userId` và `role` phục vụ hiển thị UI và điều hướng route phù hợp.
 
 ---
 
