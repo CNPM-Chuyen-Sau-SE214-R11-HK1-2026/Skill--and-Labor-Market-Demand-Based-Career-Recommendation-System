@@ -85,6 +85,22 @@ Thay các giá trị mẫu của `POSTGRES_PASSWORD` và `JWT_SECRET` bằng gi�
 - Khi kết nối từ Windows hoặc máy host, sử dụng `localhost:5432` theo cấu hình cổng mặc định.
 - Khi backend chạy bên trong Docker Compose, hostname của PostgreSQL là `postgres`, không phải `localhost`.
 - File `docker-compose.yml` đã cấu hình `POSTGRES_HOST=postgres` cho container backend.
+Docker Compose đọc `.env` ở thư mục gốc. Khi chạy Maven trực tiếp, cần nạp biến vào terminal; Spring Boot không tự đọc file `.env`. Xem [hướng dẫn W1-T5](w1-t5-auth-guide.md).
+
+1. Sao chép file cấu hình mẫu:
+   ```bash
+   cp .env.example .env
+   ```
+2. Chỉnh sửa các tham số trong file `.env` nếu cần thay đổi cổng hoặc mật khẩu CSDL:
+   ```env
+   POSTGRES_DB=career_recommendation_db
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your_secure_password
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   BACKEND_PORT=8080
+   FRONTEND_PORT=3000
+   ```
 
 > [!CAUTION]
 > **Không commit file `.env` hoặc thông tin bí mật lên Git.**
@@ -490,3 +506,11 @@ Tác vụ **W1-T6 — Docker Compose & Development Environment** tập trung và
 - Chuẩn bị tài liệu và DevLog theo quy định nhóm.
 
 Các chức năng nghiệp vụ như đăng nhập, quản lý người dùng, phân tích kỹ năng và đề xuất nghề nghiệp nằm ngoài phạm vi kiểm thử khởi động Docker của tác vụ này.
+Để đảm bảo chất lượng kỹ thuật đồng đều giữa 06 thành viên và các AI agent:
+* [**Quy trình làm việc với Git & Kiểm soát mã nguồn (`git-workflow.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md): Mô hình phân nhánh Trunk-based + Feature branch, quy chuẩn Conventional Commits, mẫu PR checklist và chính sách review.
+* [**Quy chuẩn viết mã & Kiến trúc phần mềm (`coding-conventions.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md): Quy chuẩn phân chia package Java/Spring Boot theo Domain, quy ước JPA Entity, kiến trúc thư mục Frontend React/TypeScript và nguyên tắc Clean Code.
+
+
+## 7. Xác thực W1-T5
+
+Đăng ký, đăng nhập, JWT/RBAC và hướng dẫn kiểm thử Windows: [w1-t5-auth-guide.md](w1-t5-auth-guide.md).
