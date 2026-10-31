@@ -6,7 +6,8 @@ Thư mục này lưu trữ hợp đồng giao tiếp REST API chính thức và 
 
 ## 1. Tài liệu Hợp đồng API chuẩn (Canonical Contract)
 
-* [**`api-contract.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/api/api-contract.md): Đặc tả chi tiết 100% các endpoint thuộc phạm vi MVP Tuần 2–5.
+* [**`api-contract.md`**](./api-contract.md): Đặc tả chi tiết 100% các endpoint thuộc phạm vi MVP Tuần 2–5.
+  * **Kiểm tra trạng thái hệ thống (`/api/health`):** `GET /api/health` (Công khai, phản hồi liveness/readiness tức thời không phụ thuộc CSDL).
   * **Xác thực (`/api/v1/auth`):** `POST /register`, `POST /login`, `GET /me`.
   * **Hồ sơ ứng viên & Kỹ năng (`/api/v1/profile`):** `GET /profile`, `PUT /profile`, `GET /skills`, `POST /skills`, `PUT /skills/{id}`, `DELETE /skills/{id}`.
   * **Khám phá nghề nghiệp (`/api/v1/occupations`):** `GET /occupations` (tìm kiếm/lọc/phân trang), `GET /occupations/{id}`, `GET /skills` (từ điển taxonomy).
@@ -18,6 +19,9 @@ Thư mục này lưu trữ hợp đồng giao tiếp REST API chính thức và 
 ## 2. Tiêu chuẩn thiết kế RESTful thống nhất
 
 ### 2.1. Định dạng URL & Động từ HTTP
+* **Đường dẫn cơ sở (Base URL):**
+  * Tất cả các endpoint nghiệp vụ đều mang tiền tố chuẩn hóa `/api/v1` (cấu hình frontend qua `VITE_API_BASE_URL=http://localhost:8080/api/v1`).
+  * Riêng endpoint kiểm tra trạng thái dịch vụ (Health Check) nằm trực tiếp tại `/api/health`.
 * **Danh từ số nhiều (`kebab-case`):** `/api/v1/occupations`, `/api/v1/recommendations`.
 * **Quy ước động từ:**
   * `GET`: Truy vấn dữ liệu an toàn, không thay đổi trạng thái hệ thống.
