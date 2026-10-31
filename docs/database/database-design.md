@@ -2,7 +2,7 @@
 
 **Hệ quản trị CSDL:** PostgreSQL 16  
 **Cơ chế ORM:** Spring Data JPA / Hibernate  
-**Công cụ quản lý Migration:** Flyway ([`ADR-0002`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/ADR-0002-database-migration-tool.md))<br/>
+**Công cụ quản lý Migration:** Flyway ([`ADR-0002`](../decisions/ADR-0002-database-migration-tool.md))<br/>
 **Chiến lược Hibernate ddl-auto:** `validate` (nghiêm cấm `create`, `create-drop`, `update` trên môi trường chuẩn)<br/>
 **Trạng thái thiết kế:** Đã hoàn thành thiết kế Baseline Schema (10 bảng thực thể cốt lõi)
 
@@ -10,7 +10,7 @@
 
 ## 1. Cơ sở hạ tầng kết nối & Quản trị Migration
 
-Hệ thống kết nối PostgreSQL chuẩn hóa qua biến môi trường thông qua [`backend/src/main/resources/application.yml`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/backend/src/main/resources/application.yml):
+Hệ thống kết nối PostgreSQL chuẩn hóa qua biến môi trường thông qua [`backend/src/main/resources/application.yml`](../../backend/src/main/resources/application.yml):
 
 * **Datasource URL:** `jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:career_recommendation_db}`
 * **Username / Password:** Tự động nạp qua biến môi trường `${POSTGRES_USER}` và `${POSTGRES_PASSWORD}`.
@@ -28,7 +28,7 @@ Hệ thống kết nối PostgreSQL chuẩn hóa qua biến môi trường thôn
   1. **Lõi thuật toán gợi ý MVP:** Thuật toán gợi ý chính thức được mô hình hóa theo công thức trọng số xác định:
      $$\text{FinalScore} = 0.6 \cdot \text{SkillMatch} + 0.3 \cdot \text{DemandScore} + 0.1 \cdot \text{PrefMatch}$$
      Công thức này vận hành tối ưu trên cấu trúc dữ liệu quan hệ chuẩn hóa (`user_skills`, `occupation_skills`, `market_demand_indicators`) mà không phụ thuộc bắt buộc vào vector embeddings.
-  2. **Tính tương thích hạ tầng Docker:** Image CSDL hiện tại trong [`docker-compose.yml`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docker-compose.yml) là `postgres:16-alpine` (bản PostgreSQL tiêu chuẩn, không cài sẵn binary của `pgvector`). Nếu gọi lệnh `CREATE EXTENSION vector;` trong migration baseline `V1`, container sẽ gặp lỗi nghiêm trọng và không thể khởi động nếu chưa build lại image chuyên dụng.
+  2. **Tính tương thích hạ tầng Docker:** Image CSDL hiện tại trong [`docker-compose.yml`](../../docker-compose.yml) là `postgres:16-alpine` (bản PostgreSQL tiêu chuẩn, không cài sẵn binary của `pgvector`). Nếu gọi lệnh `CREATE EXTENSION vector;` trong migration baseline `V1`, container sẽ gặp lỗi nghiêm trọng và không thể khởi động nếu chưa build lại image chuyên dụng.
 * **Quyết định kiến trúc chuẩn:**
   * **Kịch bản `V1__initial_schema.sql`:** Giữ phạm vi thuần dữ liệu quan hệ PostgreSQL 16 (10 bảng), đảm bảo 100% tính khả chuyển và khả năng chạy kiểm thử tự động tức thời trên máy của toàn bộ 06 thành viên.
   * **Lộ trình nâng cấp pgvector:** Khi triển khai tính năng bóc tách CV tự do và tìm kiếm ngữ nghĩa nâng cao (theo kế hoạch nâng cao sau Tuần 4), hạ tầng sẽ chuyển sang image `pgvector/pgvector:pg16` và kích hoạt extension thông qua tập lệnh migration phiên bản kế tiếp `V2__enable_pgvector.sql`.
@@ -172,6 +172,14 @@ erDiagram
 ## 3. Đặc tả chi tiết các bảng CSDL (Data Dictionary)
 
 ### 3.1. Bảng `users` (Tài khoản người dùng & Phân quyền)
+
+**W1-T5:** `module/auth/entity/User.java` ánh xạ bảng này; không sửa checksum V1.
+V2 thêm `phone VARCHAR(20) NULL` và unique index `uq_users_email_lower` trên
+`lower(email)` để bảo vệ đăng ký đồng thời, không phân biệt hoa thường.
+Nếu DB cũ có hai email chỉ khác hoa thường, cần xử lý trùng chủ động trước khi chạy V2;
+không tự xóa tài khoản hoặc dùng `flyway repair` để bỏ qua.
+Các entity còn lại thuộc task W1-T4, chưa được hiện thực trong bản bàn giao auth.
+
 Lưu trữ thông tin xác thực và vai trò của tài khoản trong hệ thống.
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Mô tả |
@@ -180,6 +188,7 @@ Lưu trữ thông tin xác thực và vai trò của tài khoản trong hệ th�
 | `email` | `VARCHAR(150)` | `NOT NULL, UNIQUE` | Địa chỉ email đăng nhập chuẩn |
 | `password_hash` | `VARCHAR(255)` | `NOT NULL` | Mật khẩu băm an toàn theo BCrypt |
 | `full_name` | `VARCHAR(100)` | `NOT NULL` | Họ và tên đầy đủ |
+| `phone` | `VARCHAR(20)` | `NULL`, bổ sung bởi V2 | Số điện thoại tùy chọn theo hợp đồng auth |
 | `role` | `VARCHAR(30)` | `NOT NULL DEFAULT 'ROLE_CANDIDATE'` | Phân quyền: `ROLE_CANDIDATE`, `ROLE_ADMIN` |
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Trạng thái kích hoạt tài khoản |
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL DEFAULT CURRENT_TIMESTAMP` | Thời điểm tạo |
