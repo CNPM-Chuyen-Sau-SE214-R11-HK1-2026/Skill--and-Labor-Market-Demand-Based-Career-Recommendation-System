@@ -101,6 +101,14 @@ Dự án cung cấp nền tảng gợi ý nghề nghiệp thông minh, kết n�
 
 ## 6. Hướng dẫn phát triển cục bộ (Local Development)
 
+**Bản bàn giao W1-T5 (Đoàn Việt Khang):** Đã bổ sung đăng ký/đăng nhập/me,
+BCrypt và JWT/RBAC. Xem [hướng dẫn chạy và nghiệm thu](docs/development/w1-t5-auth-guide.md).
+Các thư mục package phẳng trong sơ đồ cũ là skeleton; auth thực tế nằm trong
+`module/auth`, `common/security` và `config`. Các màn hình frontend vẫn là skeleton.
+Cần tạo `JWT_SECRET` riêng; giá trị `your_...` trong `.env.example` chỉ là placeholder.
+Khi chạy Maven, phải nạp biến môi trường vào terminal (không tự đọc `.env`).
+
+
 ### Bước 1: Khởi tạo biến môi trường
 
 Sao chép file mẫu `.env.example` thành `.env` tại thư mục gốc và chỉnh sửa thông tin phù hợp:

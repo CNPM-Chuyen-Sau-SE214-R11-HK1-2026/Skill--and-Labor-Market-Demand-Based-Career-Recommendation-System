@@ -172,6 +172,14 @@ erDiagram
 ## 3. Đặc tả chi tiết các bảng CSDL (Data Dictionary)
 
 ### 3.1. Bảng `users` (Tài khoản người dùng & Phân quyền)
+
+**W1-T5:** `module/auth/entity/User.java` ánh xạ bảng này; không sửa checksum V1.
+V2 thêm `phone VARCHAR(20) NULL` và unique index `uq_users_email_lower` trên
+`lower(email)` để bảo vệ đăng ký đồng thời, không phân biệt hoa thường.
+Nếu DB cũ có hai email chỉ khác hoa thường, cần xử lý trùng chủ động trước khi chạy V2;
+không tự xóa tài khoản hoặc dùng `flyway repair` để bỏ qua.
+Các entity còn lại thuộc task W1-T4, chưa được hiện thực trong bản bàn giao auth.
+
 Lưu trữ thông tin xác thực và vai trò của tài khoản trong hệ thống.
 
 | Cột | Kiểu dữ liệu | Ràng buộc | Mô tả |
@@ -180,6 +188,7 @@ Lưu trữ thông tin xác thực và vai trò của tài khoản trong hệ th�
 | `email` | `VARCHAR(150)` | `NOT NULL, UNIQUE` | Địa chỉ email đăng nhập chuẩn |
 | `password_hash` | `VARCHAR(255)` | `NOT NULL` | Mật khẩu băm an toàn theo BCrypt |
 | `full_name` | `VARCHAR(100)` | `NOT NULL` | Họ và tên đầy đủ |
+| `phone` | `VARCHAR(20)` | `NULL`, bổ sung bởi V2 | Số điện thoại tùy chọn theo hợp đồng auth |
 | `role` | `VARCHAR(30)` | `NOT NULL DEFAULT 'ROLE_CANDIDATE'` | Phân quyền: `ROLE_CANDIDATE`, `ROLE_ADMIN` |
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT TRUE` | Trạng thái kích hoạt tài khoản |
 | `created_at` | `TIMESTAMP WITH TIME ZONE` | `NOT NULL DEFAULT CURRENT_TIMESTAMP` | Thời điểm tạo |

@@ -103,6 +103,23 @@ module/profile/
   * **Tuyệt đối không nối thêm hoặc nhân bản tiền tố `ROLE_`** khi tạo `GrantedAuthority` (vì giá trị claim `role` đã chứa sẵn tiền tố này).
   * Trích xuất `userId` và `sub` từ token để thiết lập đối tượng Principal xác thực trong `SecurityContextHolder`.
 
+### 2.6. Phạm vi W1-T5 và phối hợp nền tảng
+
+`common/exception/GlobalExceptionHandler` và `common/dto/ErrorResponse` đã được
+thêm làm phụ thuộc tối thiểu của auth. W1-T3 cần tái sử dụng các lớp này,
+tránh tạo handler hoặc SecurityFilterChain trùng. GET `/api/health` đã được
+Security cho phép; controller health vẫn thuộc W1-T3.
+
+### 2.7. Chuẩn JWT và định danh
+
+Dùng JJWT 0.12.6 sẵn trong pom, HS256, `sub=email`, `userId` dạng số,
+`role=ROLE_CANDIDATE|ROLE_ADMIN`, `iat`, `exp`; thời hạn mặc định 24 giờ.
+Lấy userId từ `AuthenticatedUser` trong SecurityContext, không lấy từ request.
+JWT_SECRET là chuỗi UTF-8 ngẫu nhiên tối thiểu 32 byte, không tự giải mã Base64;
+chuỗi tạo bằng Base64 được dùng nguyên văn. Không có khóa mặc định trong ứng dụng.
+BCrypt cost 12, không trim mật khẩu, giới hạn 72 byte UTF-8 và 8–64 ký tự.
+Chỉ trả DTO, không serialize entity hoặc password hash; không log password/JWT.
+
 ---
 
 ## 3. Quy chuẩn Frontend (React 18, TypeScript & Vite)

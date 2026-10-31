@@ -1,6 +1,6 @@
 # Đặc tả Hợp đồng REST API (REST API Contract Specification)
 
-**Phiên bản:** 1.0.0
+**Phiên bản:** 1.1.0 (W1-T5, 2026-10-29)
 **Giao thức:** HTTPS / RESTful JSON
 **Đường dẫn cơ sở (Base URL):** `/api/v1`
 **Chuẩn định dạng:** JSON (`Content-Type: application/json; charset=utf-8`)
@@ -70,6 +70,26 @@ Mọi phản hồi lỗi (HTTP status $\ge 400$) trả về định dạng thố
 ---
 
 ### 2.1. Phân hệ Xác thực & Tài khoản (`/api/v1/auth`)
+
+**Trạng thái triển khai:** Ba endpoint auth dưới đây đã có mã nguồn. Các endpoint
+profile/taxonomy/recommendation/admin phía dưới vẫn là hợp đồng cho các task tiếp theo;
+W1-T5 chỉ đặt quy tắc Security cho các nhóm URL đó.
+
+**JWT:** HS256, `sub=email`, `userId` là số nguyên dương, `role` là
+`ROLE_CANDIDATE` hoặc `ROLE_ADMIN`; có `iat` và `exp`. Mặc định 24 giờ,
+`expiresIn` tính bằng giây theo `JWT_EXPIRATION_MS`.
+Mỗi request đọc lại `users` để từ chối tài khoản không tồn tại, bị khóa, đổi email
+hoặc đổi vai trò kể từ lúc cấp token. Token sai/hết hạn trả 401 JSON.
+
+**Dữ liệu đầu vào:** Email được trim và chuyển chữ thường; fullName/phone được trim.
+Không trim mật khẩu. Mật khẩu dài 8–64 ký tự và tối đa 72 byte UTF-8, không chứa NUL.
+`phone` tùy chọn được lưu bằng migration V2. Không có API đăng ký admin:
+role luôn được đặt phía server là `ROLE_CANDIDATE`.
+JSON có trường lạ (vd. `role`, `isActive`, `userId`) bị từ chối 400.
+`errors[].rejectedValue` luôn là null để tránh trả lại mật khẩu/dữ liệu cá nhân.
+Đăng ký/đăng nhập bỏ qua Bearer cũ để người dùng có thể đăng nhập lại.
+Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-guide.md).
+
 
 #### `POST /api/v1/auth/register`
 * **Mã thao tác (Operation ID):** `registerCandidate`
