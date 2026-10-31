@@ -36,3 +36,5 @@ ADR-<SỐ_THỨ_TỰ>-<slug-ngan-gon>.md
 |---|---|---|---|
 | [**ADR-0001**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/ADR-0001-baseline-tech-stack.md) | Lựa chọn ngăn xếp công nghệ nền tảng (React + Spring Boot + PostgreSQL + Docker) | **Accepted** | 2026-10-07 |
 | [**ADR-0002**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/decisions/ADR-0002-database-migration-tool.md) | Áp dụng Flyway quản lý Database Migration & Chuyển `ddl-auto` sang `validate` | **Accepted** | 2026-10-22 |
+
+| [**ADR-0003**](ADR-0003-auth-contract-alignment.md) | Đồng bộ auth API/schema/JWT W1-T5 | **Proposed (đã triển khai để review)** | 2026-10-29 |

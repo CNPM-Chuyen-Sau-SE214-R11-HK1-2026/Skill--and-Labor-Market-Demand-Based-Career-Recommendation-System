@@ -16,7 +16,7 @@ Tài liệu này cung cấp hướng dẫn chi tiết dành cho lập trình vi�
 
 ## 2. Thiết lập biến môi trường (Environment Setup)
 
-Hệ thống quản lý biến môi trường tập trung thông qua file `.env` ở thư mục gốc:
+Docker Compose đọc `.env` ở thư mục gốc. Khi chạy Maven trực tiếp, cần nạp biến vào terminal; Spring Boot không tự đọc file `.env`. Xem [hướng dẫn W1-T5](w1-t5-auth-guide.md).
 
 1. Sao chép file cấu hình mẫu:
    ```bash
@@ -109,3 +109,8 @@ Trước khi gửi Pull Request hoặc hoàn tất một tác vụ, lập trình
 Để đảm bảo chất lượng kỹ thuật đồng đều giữa 06 thành viên và các AI agent:
 * [**Quy trình làm việc với Git & Kiểm soát mã nguồn (`git-workflow.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/git-workflow.md): Mô hình phân nhánh Trunk-based + Feature branch, quy chuẩn Conventional Commits, mẫu PR checklist và chính sách review.
 * [**Quy chuẩn viết mã & Kiến trúc phần mềm (`coding-conventions.md`)**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/development/coding-conventions.md): Quy chuẩn phân chia package Java/Spring Boot theo Domain, quy ước JPA Entity, kiến trúc thư mục Frontend React/TypeScript và nguyên tắc Clean Code.
+
+
+## 7. Xác thực W1-T5
+
+Đăng ký, đăng nhập, JWT/RBAC và hướng dẫn kiểm thử Windows: [w1-t5-auth-guide.md](w1-t5-auth-guide.md).

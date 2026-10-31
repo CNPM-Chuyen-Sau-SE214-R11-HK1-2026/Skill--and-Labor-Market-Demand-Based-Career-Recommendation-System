@@ -3,7 +3,7 @@
 **Dự án:** Skill- and Labor Market Demand–Based Career Recommendation System
 *(Hệ thống gợi ý nghề nghiệp dựa trên kỹ năng cá nhân và nhu cầu thị trường lao động)*
 **Trạng thái:** Hoàn thiện cho phát triển song song Tuần 2–5 (Production-Ready Architecture)
-**Tài liệu tham chiếu chuẩn:** [`ADDITIONAL_DOC/Báo cáo đồ án.docx`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/requirements/current-state.md), [`AI_RULES.md`](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/AI_RULES.md)
+**Tài liệu tham chiếu chuẩn:** [`ADDITIONAL_DOC/Báo cáo đồ án.docx`](../requirements/current-state.md), [`AI_RULES.md`](../../AI_RULES.md)
 
 ---
 
@@ -75,9 +75,32 @@ graph TD
     Modules -->|Spring Data JPA / HikariCP| PostgresDB
 ```
 
+* **Kiểm tra trạng thái dịch vụ (Service Health Check - GAP-02):** Module dùng chung (`common`) cung cấp endpoint công khai `GET /api/health` trả về `{"status": "UP"}` với mã `200 OK`, đóng vai trò là điểm kiểm tra tình trạng sống (liveness probe) tức thời cho Docker Compose, Nginx và Frontend mà không phụ thuộc CSDL.
+
 ---
 
 ## 3. Đặc tả ranh giới phân hệ & Trách nhiệm thành viên (Module Boundaries)
+
+**Cập nhật phân công W1 ngày 2026-10-29:** Theo sheet `Task` của
+`CNPM Chuyên Sâu - Nhóm 4.xlsx`, W1-T5 (Auth/JWT) giao **Đoàn Việt Khang**;
+W1-T3 (backend nền tảng) giao Phạm Ngọc Gia Khang; W1-T4 (data/mapping) giao
+Huỳnh Long Bảo Khanh. Ma trận Tuần 2–5 bên dưới là kế hoạch trước đó,
+không dùng để thay thế phân công W1 trong Excel.
+
+Hiện thực W1-T5 dùng `module/auth/{controller,service,dto,entity,repository}`,
+`common/security`, `common/exception`, `common/dto` và `config/SecurityConfig`.
+`User`/`UserRepository` thuộc auth và là điểm phối hợp với W1-T4; không tạo một
+User entity thứ hai ở package phẳng. `AuthenticatedUser(userId,email,role)` là
+principal không chứa password hash để các module nhận qua `@AuthenticationPrincipal`.
+
+JWT filter xác minh chữ ký/claim, kiểm tra User còn active và role/email khớp DB,
+rồi đưa principal vào SecurityContext. Security stateless, không phát session cookie,
+không bật HTTP Basic/form login; CSRF tắt vì dùng Bearer header, không cookie auth.
+CORS theo danh sách origin cấu hình; không dùng wildcard credentials.
+Chỉ POST register/login và GET health/taxonomy được công khai; admin cần ADMIN,
+profile/recommendation cần CANDIDATE; endpoint khác mặc định bị chặn.
+Chưa tạo controller nghiệp vụ cho các module khác trong W1-T5.
+
 
 | STT | Phân hệ (Module) | Trách nhiệm chính | Thực thể quản lý | Thành viên phụ trách |
 | :---: | :--- | :--- | :--- | :--- |
@@ -115,12 +138,12 @@ sequenceDiagram
     AuthSvc->>AuthSvc: BCryptPasswordEncoder.matches(raw, hash)
     alt Mật khẩu không chính xác
         AuthSvc-->>AuthCtrl: Ném BadCredentialsException
-        AuthCtrl-->>UI: 401 Unauthorized {status: 401, error: "BAD_CREDENTIALS"}
+        AuthCtrl-->>UI: 401 Unauthorized {status: 401, error: "Unauthorized"}
         UI-->>User: Hiển thị thông báo "Sai tài khoản hoặc mật khẩu"
     else Xác thực thành công
         AuthSvc-->>AuthCtrl: Authentication Object (Principal, Roles)
         AuthCtrl->>TokenProv: generateToken(authentication)
-        TokenProv-->>AuthCtrl: JWT Token String (24h validity)
+        TokenProv-->>AuthCtrl: JWT Token String (24h validity, claims: sub, userId, role)
         AuthCtrl-->>UI: 200 OK {accessToken, tokenType: "Bearer", expiresIn, user}
         UI->>UI: Lưu token vào LocalStorage/Memory, gắn vào Axios Interceptor
         UI-->>User: Điều hướng vào Dashboard
@@ -282,15 +305,14 @@ Mọi ngoại lệ trên toàn hệ thống được bắt tại `GlobalExceptio
 {
   "timestamp": "2026-10-22T15:30:00Z",
   "status": 400,
-  "error": "BAD_REQUEST",
-  "errorCode": "VALIDATION_FAILED",
+  "error": "Bad Request",
   "message": "Dữ liệu đầu vào không hợp lệ",
   "path": "/api/v1/profile/skills",
-  "fieldErrors": [
+  "errors": [
     {
       "field": "proficiencyLevel",
-      "rejectedValue": "SUPER_EXPERT",
-      "message": "Cấp độ kỹ năng phải thuộc một trong các giá trị: BEGINNER, INTERMEDIATE, ADVANCED, EXPERT"
+      "rejectedValue": null,
+      "reason": "Cấp độ kỹ năng phải thuộc một trong các giá trị: BEGINNER, INTERMEDIATE, ADVANCED, EXPERT"
     }
   ]
 }
