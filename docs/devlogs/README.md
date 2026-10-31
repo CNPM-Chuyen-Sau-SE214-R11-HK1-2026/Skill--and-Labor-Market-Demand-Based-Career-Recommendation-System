@@ -46,6 +46,7 @@ Mỗi DevLog phải được khởi tạo từ mẫu [**`DEVLOG-TEMPLATE.md`**](
 
 | Ngày | File DevLog | Tác vụ | Người thực hiện |
 |---|---|---|---|
-| 2026-10-09 | [**`2026-10-09-init-ai-rules-and-docs.md`**](./2026-10-09-init-ai-rules-and-docs.md) | Thiết lập AI Guardrails và Hệ thống tài liệu sống (Living Documentation System) | Antigravity AI Agent |
-| 2026-10-22 | [**`2026-10-22-resolve-week-1-task-1.md`**](./2026-10-22-resolve-week-1-task-1.md) | Giải quyết toàn diện các hạng mục tồn đọng Tuần 1 Tác vụ 1 (Resolve Week 1 Task 1) | Antigravity AI Assistant |
+| 2026-10-09 | [**`2026-10-09-init-ai-rules-and-docs.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-09-init-ai-rules-and-docs.md) | Thiết lập AI Guardrails và Hệ thống tài liệu sống (Living Documentation System) | Antigravity AI Agent |
+| 2026-10-22 | [**`2026-10-22-resolve-week-1-task-1.md`**](file:///d:/Khai%20Van/KhaiVan%20Data/Dai%20Hoc/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-22-resolve-week-1-task-1.md) | Giải quyết toàn diện các hạng mục tồn đọng Tuần 1 Tác vụ 1 (Resolve Week 1 Task 1) | Antigravity AI Assistant |
 | 2026-10-23 | [**`2026-10-23-week-1-decisions-and-task-mapping.md`**](./2026-10-23-week-1-decisions-and-task-mapping.md) | Ghi nhận quyết định kỹ thuật Tuần 1 và Ánh xạ tài liệu nguồn cho Task 2–6 và Backlog Tuần 2–5 | Antigravity AI Assistant |
+| 2026-10-29 | [**2026-10-29-w1-t4-jpa-entities-and-repositories.md**](file:///d:/Khanh/C%C3%B4ng%20ngh%E1%BB%87%20ph%E1%BA%A7n%20m%E1%BB%81m%20chuy%C3%AAn%20s%C3%A2u/Project/Skill--and-Labor-Market-Demand-Based-Career-Recommendation-System/docs/devlogs/2026-10-29-w1-t4-jpa-entities-and-repositories.md) | Triển khai 10 JPA Entities & Spring Data Repositories Nền móng (Task W1-T4) | Huỳnh Long Bảo Khanh (hỗ trợ bởi Antigravity AI) |
