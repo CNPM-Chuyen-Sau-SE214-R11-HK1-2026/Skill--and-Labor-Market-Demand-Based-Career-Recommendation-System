@@ -1,5 +1,8 @@
 package com.cnpm.careerrecommendation.module.auth;
 
+import com.cnpm.careerrecommendation.common.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.User;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import com.cnpm.careerrecommendation.common.security.AuthenticatedUser;
 import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
 import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
@@ -7,9 +10,6 @@ import com.cnpm.careerrecommendation.config.CorsProperties;
 import com.cnpm.careerrecommendation.config.SecurityConfig;
 import com.cnpm.careerrecommendation.module.auth.controller.AuthController;
 import com.cnpm.careerrecommendation.module.auth.dto.CurrentUserResponse;
-import com.cnpm.careerrecommendation.module.auth.entity.Role;
-import com.cnpm.careerrecommendation.module.auth.entity.User;
-import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
 import com.cnpm.careerrecommendation.module.auth.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

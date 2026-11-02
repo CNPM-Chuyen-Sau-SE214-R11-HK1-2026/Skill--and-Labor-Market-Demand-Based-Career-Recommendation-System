@@ -1,4 +1,4 @@
-package com.cnpm.careerrecommendation.entity;
+package com.cnpm.careerrecommendation.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -112,4 +112,3 @@ public class SkillCategory {
         this.updatedAt = updatedAt;
     }
 }
-

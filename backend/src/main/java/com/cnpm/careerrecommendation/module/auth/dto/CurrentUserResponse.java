@@ -1,7 +1,7 @@
 package com.cnpm.careerrecommendation.module.auth.dto;
 
-import com.cnpm.careerrecommendation.module.auth.entity.Role;
-import com.cnpm.careerrecommendation.module.auth.entity.User;
+import com.cnpm.careerrecommendation.common.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.User;
 import java.time.Instant;
 
 public record CurrentUserResponse(Long id, String email, String fullName, String phone,

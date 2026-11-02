@@ -1,7 +1,7 @@
 package com.cnpm.careerrecommendation.common.security;
 
-import com.cnpm.careerrecommendation.module.auth.entity.Role;
-import com.cnpm.careerrecommendation.module.auth.entity.User;
+import com.cnpm.careerrecommendation.common.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;

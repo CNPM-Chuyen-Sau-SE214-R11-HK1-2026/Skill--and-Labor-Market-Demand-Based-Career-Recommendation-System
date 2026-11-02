@@ -1,4 +1,4 @@
-package com.cnpm.careerrecommendation.entity;
+package com.cnpm.careerrecommendation.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,11 +21,11 @@ import java.time.OffsetDateTime;
  */
 @Entity
 @Table(
-    name = "skills",
-    indexes = {
-        @Index(name = "idx_skills_name", columnList = "name"),
-        @Index(name = "idx_skills_category_id", columnList = "category_id")
-    }
+        name = "skills",
+        indexes = {
+                @Index(name = "idx_skills_name", columnList = "name"),
+                @Index(name = "idx_skills_category_id", columnList = "category_id")
+        }
 )
 public class Skill {
 
@@ -153,4 +153,3 @@ public class Skill {
         this.updatedAt = updatedAt;
     }
 }
-

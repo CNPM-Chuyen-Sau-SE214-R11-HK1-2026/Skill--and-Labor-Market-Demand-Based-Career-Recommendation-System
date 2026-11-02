@@ -1,5 +1,8 @@
 package com.cnpm.careerrecommendation.entity;
 
+import com.cnpm.careerrecommendation.common.entity.Skill;
+import com.cnpm.careerrecommendation.common.entity.SkillCategory;
+import com.cnpm.careerrecommendation.common.entity.User;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -47,4 +50,3 @@ class HibernateMetadataTest {
         }
     }
 }
-

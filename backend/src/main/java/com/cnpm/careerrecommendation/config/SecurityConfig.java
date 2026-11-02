@@ -4,7 +4,7 @@ import com.cnpm.careerrecommendation.common.dto.ErrorResponse;
 import com.cnpm.careerrecommendation.common.security.JwtAuthenticationFilter;
 import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
 import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
-import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
