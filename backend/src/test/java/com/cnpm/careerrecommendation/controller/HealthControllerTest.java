@@ -1,16 +1,22 @@
 package com.cnpm.careerrecommendation.controller;
 
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
+import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
+import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
 import com.cnpm.careerrecommendation.config.CorsProperties;
 import com.cnpm.careerrecommendation.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -20,11 +26,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - Content-Type application/json
  */
 @WebMvcTest(HealthController.class)
-@Import({SecurityConfig.class, CorsProperties.class})
+@Import({SecurityConfig.class, CorsProperties.class, SecurityErrorHandler.class})
 class HealthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("GET /api/health returns HTTP 200 with status UP")
@@ -46,14 +58,27 @@ class HealthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/health returns 405 Method Not Allowed with ErrorResponse")
+    @DisplayName("POST /api/health without authentication returns 401 Unauthorized")
+    void healthCheck_PostWithoutAuthReturns401() throws Exception {
+        mockMvc.perform(post("/api/health")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("POST /api/health with authentication returns 405 Method Not Allowed with ErrorResponse")
     void healthCheck_PostMethodNotAllowed() throws Exception {
-        mockMvc.perform(
-                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/health")
-                                .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post("/api/health")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isMethodNotAllowed())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(405))
-                .andExpect(jsonPath("$.error").exists())
+                .andExpect(jsonPath("$.error").value("Method Not Allowed"))
+                .andExpect(jsonPath("$.message").value("Phương thức HTTP không được hỗ trợ"))
                 .andExpect(jsonPath("$.path").value("/api/health"));
     }
 }

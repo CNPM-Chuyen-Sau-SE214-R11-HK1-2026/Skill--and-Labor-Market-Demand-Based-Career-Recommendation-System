@@ -8,6 +8,7 @@ import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
 import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
 import com.cnpm.careerrecommendation.config.CorsProperties;
 import com.cnpm.careerrecommendation.config.SecurityConfig;
+import com.cnpm.careerrecommendation.controller.HealthController;
 import com.cnpm.careerrecommendation.module.auth.controller.AuthController;
 import com.cnpm.careerrecommendation.module.auth.dto.CurrentUserResponse;
 import com.cnpm.careerrecommendation.module.auth.service.AuthService;
@@ -30,9 +31,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = {AuthController.class, AdminSmokeTestController.class})
+@WebMvcTest(controllers = {AuthController.class, AdminSmokeTestController.class, HealthController.class})
 @Import({SecurityConfig.class, CorsProperties.class, JwtTokenProvider.class, SecurityErrorHandler.class})
 @TestPropertySource(properties = {
         "security.jwt.secret=test-secret-key-that-is-at-least-32-bytes-long-for-hmac",
@@ -115,5 +117,30 @@ class AuthSecurityTest {
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.error").value("Forbidden"))
                 .andExpect(jsonPath("$.path").value("/api/test/admin-only"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/skills without token returns 401 Unauthorized")
+    void postSkillsWithoutToken_Returns401Json() throws Exception {
+        mockMvc.perform(post("/api/v1/skills")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Java\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.path").value("/api/v1/skills"));
+    }
+
+    @Test
+    @DisplayName("Non-GET method (POST) on /api/health without token returns 401 Unauthorized")
+    void postHealthWithoutToken_Returns401Json() throws Exception {
+        mockMvc.perform(post("/api/health")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.path").value("/api/health"));
     }
 }

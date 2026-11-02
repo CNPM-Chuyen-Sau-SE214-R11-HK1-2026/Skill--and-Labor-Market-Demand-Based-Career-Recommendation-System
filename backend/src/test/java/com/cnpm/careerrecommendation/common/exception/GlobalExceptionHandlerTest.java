@@ -1,5 +1,8 @@
 package com.cnpm.careerrecommendation.common.exception;
 
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
+import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
+import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
 import com.cnpm.careerrecommendation.config.CorsProperties;
 import com.cnpm.careerrecommendation.config.SecurityConfig;
 import jakarta.validation.Valid;
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +39,15 @@ class GlobalExceptionHandlerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private SecurityErrorHandler securityErrorHandler;
 
     @RestController
     @RequestMapping("/api/test-handler")
@@ -145,6 +158,27 @@ class GlobalExceptionHandlerTest {
                     .andExpect(jsonPath("$.errors[0].field").value("email"))
                     .andExpect(jsonPath("$.errors[0].rejectedValue").value(nullValue()))
                     .andExpect(jsonPath("$.errors[0].reason").value("Email không đúng định dạng hợp lệ"));
+        }
+
+        @Test
+        @DisplayName("Password too short returns 400 and rejectedValue is masked as null")
+        void shortPassword_Returns400() throws Exception {
+            String shortPwdJson = """
+                    {
+                        "email": "test@example.com",
+                        "password": "abc",
+                        "fullName": "Nguyễn Văn A"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/test-handler/validation")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(shortPwdJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.errors[0].field").value("password"))
+                    .andExpect(jsonPath("$.errors[0].rejectedValue").value(nullValue()))
+                    .andExpect(jsonPath("$.errors[0].reason").exists());
         }
 
         @Test

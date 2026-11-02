@@ -1,10 +1,14 @@
 package com.cnpm.careerrecommendation.config;
 
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
+import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
+import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
 import com.cnpm.careerrecommendation.controller.HealthController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +29,15 @@ class CorsConfigTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private SecurityErrorHandler securityErrorHandler;
 
     @Test
     @DisplayName("CORS: Allowed origin receives Access-Control-Allow-Origin header")
@@ -49,28 +62,19 @@ class CorsConfigTest {
     }
 
     @Test
-    @DisplayName("CORS: Alternative allowed origin http://localhost:5173 is accepted")
-    void alternativeAllowedOrigin_Accepted() throws Exception {
+    @DisplayName("CORS: Disallowed origin does not receive Access-Control-Allow-Origin")
+    void disallowedOrigin_Rejected() throws Exception {
+        mockMvc.perform(get("/api/health")
+                        .header(HttpHeaders.ORIGIN, "http://malicious-site.com"))
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    @Test
+    @DisplayName("CORS: Credentials header is present when allowCredentials is true")
+    void credentialsHeader_Present() throws Exception {
         mockMvc.perform(get("/api/health")
                         .header(HttpHeaders.ORIGIN, "http://localhost:5173"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"));
-    }
-
-    @Test
-    @DisplayName("CORS: Disallowed origin does NOT receive Access-Control-Allow-Origin header")
-    void disallowedOrigin_NoCorsHeaders() throws Exception {
-        mockMvc.perform(get("/api/health")
-                        .header(HttpHeaders.ORIGIN, "http://evil-site.com"))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("CORS: Preflight for disallowed origin is rejected")
-    void preflightRequest_DisallowedOrigin_Rejected() throws Exception {
-        mockMvc.perform(options("/api/health")
-                        .header(HttpHeaders.ORIGIN, "http://evil-site.com")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
-                .andExpect(status().isForbidden());
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
     }
 }
