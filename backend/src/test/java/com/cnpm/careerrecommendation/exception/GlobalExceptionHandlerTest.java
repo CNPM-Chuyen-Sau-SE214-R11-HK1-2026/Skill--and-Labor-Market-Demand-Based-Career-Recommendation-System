@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(GlobalExceptionHandlerTest.TestValidationController.class)
 @Import({SecurityConfig.class, CorsProperties.class, GlobalExceptionHandler.class})
+@org.springframework.security.test.context.support.WithMockUser
 class GlobalExceptionHandlerTest {
 
     @Autowired

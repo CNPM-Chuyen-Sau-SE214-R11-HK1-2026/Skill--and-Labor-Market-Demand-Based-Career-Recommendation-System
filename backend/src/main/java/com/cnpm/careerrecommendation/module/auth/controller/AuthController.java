@@ -26,6 +26,9 @@ public class AuthController {
 
     @GetMapping("/me")
     public CurrentUserResponse me(@AuthenticationPrincipal AuthenticatedUser identity) {
+        if (identity == null) {
+            throw new org.springframework.security.authentication.BadCredentialsException("Yêu cầu token Bearer hợp lệ");
+        }
         return auth.currentUser(identity);
     }
 }

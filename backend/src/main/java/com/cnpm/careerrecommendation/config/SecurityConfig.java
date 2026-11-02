@@ -1,12 +1,19 @@
 package com.cnpm.careerrecommendation.config;
 
-import com.cnpm.careerrecommendation.dto.ErrorResponse;
+import com.cnpm.careerrecommendation.common.dto.ErrorResponse;
+import com.cnpm.careerrecommendation.common.security.JwtAuthenticationFilter;
+import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
+import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
+import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,14 +33,24 @@ import java.nio.charset.StandardCharsets;
 /**
  * Baseline Spring Security configuration establishing stateless security filter chain,
  * public endpoint access (such as /api/health), CORS integration, and standardized error responses.
- * Designed to provide the foundation and integration point for Task W1-T5 (JWT & Authentication).
+ * Enforces method-level security and protects all authenticated resources.
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
     private final ObjectMapper objectMapper;
+
+    @Autowired(required = false)
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired(required = false)
+    private UserRepository userRepository;
+
+    @Autowired(required = false)
+    private SecurityErrorHandler securityErrorHandler;
 
     public SecurityConfig(CorsProperties corsProperties, ObjectMapper objectMapper) {
         this.corsProperties = corsProperties;
@@ -52,15 +70,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Health check endpoint
                         .requestMatchers("/api/health").permitAll()
-                        // Public endpoints according to API Contract
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/occupations/**").permitAll()
-                        .requestMatchers("/api/v1/skills/**").permitAll()
-                        // Testing endpoint routes
-                        .requestMatchers("/api/test/**").permitAll()
-                        // All other endpoints require authentication
+                        // Public auth endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
+                        // Public taxonomy GETs from docs/api/taxonomy.md
+                        .requestMatchers(HttpMethod.GET, "/api/v1/occupations/**", "/api/v1/skills", "/api/v1/skills/**").permitAll()
+                        // All other endpoints require authentication (/api/v1/auth/me, /api/v1/profile/**, etc.)
                         .anyRequest().authenticated()
                 );
+
+        if (jwtTokenProvider != null && userRepository != null && securityErrorHandler != null) {
+            JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(
+                    jwtTokenProvider, userRepository, securityErrorHandler);
+            http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }
@@ -85,10 +107,10 @@ public class SecurityConfig {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setHeader("WWW-Authenticate", "Bearer");
 
-            ErrorResponse errorResponse = new ErrorResponse(
-                    HttpStatus.UNAUTHORIZED.value(),
-                    HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+            ErrorResponse errorResponse = ErrorResponse.of(
+                    HttpStatus.UNAUTHORIZED,
                     "Yêu cầu xác thực tài khoản để truy cập tài nguyên này",
                     request.getRequestURI()
             );
@@ -104,9 +126,8 @@ public class SecurityConfig {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-            ErrorResponse errorResponse = new ErrorResponse(
-                    HttpStatus.FORBIDDEN.value(),
-                    HttpStatus.FORBIDDEN.getReasonPhrase(),
+            ErrorResponse errorResponse = ErrorResponse.of(
+                    HttpStatus.FORBIDDEN,
                     "Bạn không có quyền truy cập tài nguyên này",
                     request.getRequestURI()
             );

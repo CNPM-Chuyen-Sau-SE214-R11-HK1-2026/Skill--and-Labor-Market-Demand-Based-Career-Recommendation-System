@@ -59,6 +59,9 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public CurrentUserResponse currentUser(AuthenticatedUser identity) {
+        if (identity == null) {
+            throw new BadCredentialsException("Yêu cầu token Bearer hợp lệ");
+        }
         return users.findById(identity.userId()).filter(User::isActive)
                 .map(CurrentUserResponse::from)
                 .orElseThrow(() -> new BadCredentialsException("Invalid user"));
