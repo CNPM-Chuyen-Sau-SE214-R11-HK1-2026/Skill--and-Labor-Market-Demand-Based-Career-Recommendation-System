@@ -191,268 +191,34 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 
 ---
 
-### 2.2. Phân hệ Hồ sơ ứng viên & Kỹ năng cá nhân (`/api/v1/profile`)
+### 2.2. Phân hệ Hồ sơ ứng viên & Kỹ năng cá nhân (/api/v1/profile)
 
-> [!IMPORTANT]
-> **Nguyên tắc bảo mật quyền sở hữu tài nguyên (Candidate Ownership Security Guarantee):**
-> Toàn bộ các thao tác trong phân hệ `/api/v1/profile/**` và `/api/v1/recommendations/**` **tuyệt đối không** chấp nhận tham số `userId` trên URL đường dẫn (path variable) hoặc trong request body. Định danh ứng viên (`userId`) bắt buộc phải được trích xuất trực tiếp và duy nhất từ đối tượng `Authentication` (JWT Bearer subject) đã được Spring Security xác thực trong ngữ cảnh phiên làm việc (`SecurityContextHolder`).
-> **Cam kết:** Bất kỳ ứng viên nào cũng không thể xem, sửa đổi, thêm hoặc xóa hồ sơ/kỹ năng của ứng viên khác. Mọi hành vi cố tình thao túng dữ liệu không thuộc quyền sở hữu đều bị từ chối với mã lỗi `403 Forbidden` hoặc `401 Unauthorized`.
-
-#### `GET /api/v1/profile`
-* **Mã thao tác (Operation ID):** `getCandidateProfile`
-* **Mô tả:** Lấy toàn bộ thông tin hồ sơ cá nhân và nguyện vọng nghề nghiệp của ứng viên.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Header:** `Authorization: Bearer <token>`
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  {
-    "id": 1,
-    "userId": 1,
-    "headline": "Junior Software Engineer",
-    "educationLevel": "BACHELOR",
-    "yearsOfExperience": 1,
-    "expectedSalaryMin": 15000000,
-    "expectedSalaryMax": 25000000,
-    "preferredLocation": "Hồ Chí Minh",
-    "workMode": "HYBRID",
-    "targetIndustry": "Công nghệ thông tin",
-    "skillsCount": 5,
-    "updatedAt": "2026-10-22T15:35:00Z"
-  }
-  ```
-* **Mã lỗi dự kiến:** `401 Unauthorized`, `404 Not Found`.
+> [!NOTE]
+> Toàn bộ hợp đồng chi tiết, quy tắc bảo mật quyền sở hữu tài nguyên và các trường hợp lỗi HTTP 404/400 của phân hệ Profile đã được tách riêng và do **Phạm Ngọc Gia Khang (W2-T2)** sở hữu độc quyền tại:
+>
+> 👉 [**Đặc tả Hợp đồng REST API Phân hệ Hồ sơ Ứng viên (docs/api/profile.md)**](./profile.md)
+>
+> **Tóm tắt danh mục endpoints:**
+> - GET /api/v1/profile: Lấy thông tin hồ sơ (trả HTTP 404 PROFILE_NOT_FOUND nếu chưa tạo, không tự sinh ngầm).
+> - PUT /api/v1/profile: Tạo mới hoặc cập nhật hồ sơ (validate salaryMin <= salaryMax).
+> - GET /api/v1/profile/skills: Danh sách kỹ năng của ứng viên.
+> - POST /api/v1/profile/skills: Thêm kỹ năng cá nhân (tham chiếu common.entity.Skill).
+> - PUT /api/v1/profile/skills/{skillId}: Cập nhật mức độ thành thạo / số năm kinh nghiệm.
+> - DELETE /api/v1/profile/skills/{skillId}: Xóa kỹ năng khỏi hồ sơ (204 No Content).
 
 ---
 
-#### `PUT /api/v1/profile`
-* **Mã thao tác (Operation ID):** `updateCandidateProfile`
-* **Mô tả:** Cập nhật thông tin học vấn, kinh nghiệm và nguyện vọng nghề nghiệp.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Request Body:**
-  ```json
-  {
-    "headline": "Fullstack Java & React Developer",
-    "educationLevel": "BACHELOR",
-    "yearsOfExperience": 2,
-    "expectedSalaryMin": 18000000,
-    "expectedSalaryMax": 30000000,
-    "preferredLocation": "Hồ Chí Minh",
-    "workMode": "HYBRID",
-    "targetIndustry": "Công nghệ thông tin"
-  }
-  ```
-* **Phản hồi thành công (`200 OK`):** Trả về đối tượng hồ sơ sau khi cập nhật.
-* **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`.
+### 2.3. Phân hệ Khám phá nghề nghiệp & Danh mục Taxonomy (/api/v1/occupations, /api/v1/skills)
 
----
-
-#### `GET /api/v1/profile/skills`
-* **Mã thao tác (Operation ID):** `getUserSkills`
-* **Mô tả:** Lấy danh sách kỹ năng cá nhân đã khai báo kèm mức độ thành thạo.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  [
-    {
-      "skillId": 12,
-      "skillCode": "SK-JAVA-01",
-      "skillName": "Java",
-      "categoryName": "Lập trình & Phát triển phần mềm",
-      "proficiencyLevel": "INTERMEDIATE",
-      "yearsExperience": 1.5,
-      "verified": false
-    },
-    {
-      "skillId": 15,
-      "skillCode": "SK-SQL-01",
-      "skillName": "PostgreSQL / SQL",
-      "categoryName": "Cơ sở dữ liệu",
-      "proficiencyLevel": "ADVANCED",
-      "yearsExperience": 2.0,
-      "verified": false
-    }
-  ]
-  ```
-
----
-
-#### `POST /api/v1/profile/skills`
-* **Mã thao tác (Operation ID):** `addSkillToProfile`
-* **Mô tả:** Thêm một kỹ năng vào hồ sơ năng lực của ứng viên.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Request Body:**
-  ```json
-  {
-    "skillId": 12,                          // Long, required
-    "proficiencyLevel": "INTERMEDIATE",     // Enum: BEGINNER | INTERMEDIATE | ADVANCED | EXPERT, required
-    "yearsExperience": 1.5                  // Double, optional, >= 0
-  }
-  ```
-* **Phản hồi thành công (`201 Created`):**
-  ```json
-  {
-    "skillId": 12,
-    "skillName": "Java",
-    "proficiencyLevel": "INTERMEDIATE",
-    "yearsExperience": 1.5,
-    "createdAt": "2026-10-22T15:40:00Z"
-  }
-  ```
-* **Mã lỗi dự kiến:**
-  * `400 Bad Request`: `skillId` không hợp lệ hoặc `proficiencyLevel` sai enum.
-  * `404 Not Found`: Không tìm thấy kỹ năng trong từ điển taxonomy.
-  * `409 Conflict`: Kỹ năng đã có trong hồ sơ của người dùng.
-
----
-
-#### `PUT /api/v1/profile/skills/{skillId}`
-* **Mã thao tác (Operation ID):** `updateSkillInProfile`
-* **Mô tả:** Cập nhật mức độ thành thạo hoặc số năm kinh nghiệm của một kỹ năng đã có trong hồ sơ cá nhân của ứng viên.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Tham số đường dẫn (Path Variable):** `skillId` (Long, ID kỹ năng trong hồ sơ ứng viên)
-* **Request Body:**
-  ```json
-  {
-    "proficiencyLevel": "ADVANCED",       // Enum: BEGINNER | INTERMEDIATE | ADVANCED | EXPERT, required
-    "yearsExperience": 2.5                // Double, optional, >= 0
-  }
-  ```
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  {
-    "skillId": 12,
-    "skillName": "Java",
-    "proficiencyLevel": "ADVANCED",
-    "yearsExperience": 2.5,
-    "updatedAt": "2026-10-22T16:00:00Z"
-  }
-  ```
-* **Mã lỗi dự kiến:**
-  * `400 Bad Request`: Giá trị enum không hợp lệ hoặc số năm kinh nghiệm âm.
-  * `401 Unauthorized`: Chưa đăng nhập hoặc token hết hạn.
-  * `404 Not Found`: Kỹ năng không tồn tại trong hồ sơ của ứng viên hiện tại.
-
----
-
-#### `DELETE /api/v1/profile/skills/{skillId}`
-* **Mã thao tác (Operation ID):** `removeSkillFromProfile`
-* **Mô tả:** Xóa một kỹ năng khỏi hồ sơ ứng viên.
-* **Module chịu trách nhiệm:** `user`
-* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
-* **Phản hồi thành công (`204 No Content`)**
-* **Mã lỗi dự kiến:** `401 Unauthorized`, `404 Not Found`.
-
----
-
-### 2.3. Phân hệ Khám phá nghề nghiệp & Danh mục Taxonomy (`/api/v1/occupations`)
-
-#### `GET /api/v1/occupations`
-* **Mã thao tác (Operation ID):** `searchOccupations`
-* **Mô tả:** Tìm kiếm và lọc danh mục nghề nghiệp theo từ khóa, nhóm ngành, phân trang.
-* **Module chịu trách nhiệm:** `taxonomy`
-* **Quyền truy cập:** Công khai (`Public`)
-* **Tham số truy vấn (Query Params):**
-  * `query`: Từ khóa tìm kiếm tên/mô tả nghề (String, optional)
-  * `groupId`: Lọc theo mã nhóm nghề (Long, optional)
-  * `page`: Số trang, 0-indexed (Integer, default: 0)
-  * `size`: Số phần tử trên mỗi trang (Integer, default: 20, max: 100)
-  * `sort`: Sắp xếp theo trường (String, default: `title,asc`)
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  {
-    "content": [
-      {
-        "id": 101,
-        "code": "SOC-15-1252",
-        "title": "Software Developer / Kỹ sư phần mềm",
-        "groupName": "Công nghệ thông tin & Khoa học máy tính",
-        "averageSalaryMin": 15000000,
-        "averageSalaryMax": 35000000,
-        "demandScore": 88.5,
-        "growthRatePct": 12.4
-      }
-    ],
-    "pageNumber": 0,
-    "pageSize": 20,
-    "totalElements": 45,
-    "totalPages": 3,
-    "last": false
-  }
-  ```
-
----
-
-#### `GET /api/v1/occupations/{id}`
-* **Mã thao tác (Operation ID):** `getOccupationDetail`
-* **Mô tả:** Lấy thông tin chi tiết một nghề nghiệp, bao gồm bộ kỹ năng yêu cầu (cốt lõi vs bổ trợ) và chỉ số thị trường lao động.
-* **Module chịu trách nhiệm:** `taxonomy` & `lmi`
-* **Quyền truy cập:** Công khai (`Public`)
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  {
-    "id": 101,
-    "code": "SOC-15-1252",
-    "title": "Software Developer / Kỹ sư phần mềm",
-    "groupName": "Công nghệ thông tin",
-    "description": "Nghiên cứu, thiết kế, phát triển và thử nghiệm các phần mềm ứng dụng...",
-    "salaryRange": {
-      "min": 15000000,
-      "max": 35000000,
-      "currency": "VND"
-    },
-    "marketIndicators": {
-      "demandScore": 88.5,
-      "growthRatePct": 12.4,
-      "shortageLevel": "HIGH",
-      "openingsCount": 1250,
-      "dataPeriod": "2025-2026",
-      "sourceName": "Cục Thống kê & Báo cáo WEF 2025"
-    },
-    "skills": [
-      {
-        "skillId": 12,
-        "skillCode": "SK-JAVA-01",
-        "skillName": "Java",
-        "importanceType": "ESSENTIAL",
-        "weight": 1.0
-      },
-      {
-        "skillId": 18,
-        "skillCode": "SK-DOCKER-01",
-        "skillName": "Docker & Containerization",
-        "importanceType": "OPTIONAL",
-        "weight": 0.5
-      }
-    ]
-  }
-  ```
-* **Mã lỗi dự kiến:** `404 Not Found`.
-
----
-
-#### `GET /api/v1/skills`
-* **Mã thao tác (Operation ID):** `searchSkills`
-* **Mô tả:** Tìm kiếm danh mục kỹ năng chuẩn hóa (theo O\*NET / ESCO) để người dùng chọn khi tạo hồ sơ.
-* **Module chịu trách nhiệm:** `taxonomy`
-* **Quyền truy cập:** Công khai (`Public`)
-* **Tham số:** `query` (String, min 2 chars), `categoryId` (Long, optional)
-* **Phản hồi thành công (`200 OK`):**
-  ```json
-  [
-    {
-      "id": 12,
-      "code": "SK-JAVA-01",
-      "name": "Java",
-      "categoryName": "Lập trình",
-      "standardSource": "ESCO"
-    }
-  ]
-  ```
+> [!NOTE]
+> Toàn bộ hợp đồng chi tiết và định dạng dữ liệu Seed Data V3 của phân hệ Taxonomy đã được tách riêng và do **Huỳnh Long Bảo Khanh (W2-T3)** sở hữu độc quyền tại:
+>
+> 👉 [**Đặc tả Hợp đồng REST API Phân hệ Danh mục Nghề nghiệp & Kỹ năng (docs/api/taxonomy.md)**](./taxonomy.md)
+>
+> **Tóm tắt danh mục endpoints:**
+> - GET /api/v1/occupations: Phân trang, tìm kiếm theo từ khóa, lọc theo nhóm ngành (công khai).
+> - GET /api/v1/occupations/{id}: Xem chi tiết nghề, danh sách kỹ năng trọng số và chỉ số LMI (công khai).
+> - GET /api/v1/skills: Danh mục từ điển kỹ năng chuẩn hóa O*NET/ESCO (công khai).
 
 ---
 

@@ -1,6 +1,6 @@
-package com.cnpm.careerrecommendation.repository;
+package com.cnpm.careerrecommendation.common.repository;
 
-import com.cnpm.careerrecommendation.entity.Skill;
+import com.cnpm.careerrecommendation.common.entity.Skill;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,4 +21,3 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     List<Skill> findByNameContainingIgnoreCase(String name);
 }
-

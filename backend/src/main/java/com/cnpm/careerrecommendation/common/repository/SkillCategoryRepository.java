@@ -1,6 +1,6 @@
-package com.cnpm.careerrecommendation.repository;
+package com.cnpm.careerrecommendation.common.repository;
 
-import com.cnpm.careerrecommendation.entity.SkillCategory;
+import com.cnpm.careerrecommendation.common.entity.SkillCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,7 +13,4 @@ import java.util.Optional;
 public interface SkillCategoryRepository extends JpaRepository<SkillCategory, Long> {
 
     Optional<SkillCategory> findByCode(String code);
-
-    boolean existsByCode(String code);
 }
-

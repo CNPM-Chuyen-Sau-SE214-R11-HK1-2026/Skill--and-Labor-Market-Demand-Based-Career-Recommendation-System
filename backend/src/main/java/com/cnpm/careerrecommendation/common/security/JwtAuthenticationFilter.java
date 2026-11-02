@@ -1,7 +1,7 @@
 package com.cnpm.careerrecommendation.common.security;
 
-import com.cnpm.careerrecommendation.module.auth.entity.User;
-import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
+import com.cnpm.careerrecommendation.common.entity.User;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,10 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokens;
     private final UserRepository users;
