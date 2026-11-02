@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
  * Centralized Global Exception Handler returning standardized ErrorResponse matching API Contract section 1.2.
  */
 @RestControllerAdvice
+@org.springframework.core.annotation.Order(org.springframework.core.Ordered.HIGHEST_PRECEDENCE)
+@org.springframework.stereotype.Component("legacyGlobalExceptionHandler")
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
