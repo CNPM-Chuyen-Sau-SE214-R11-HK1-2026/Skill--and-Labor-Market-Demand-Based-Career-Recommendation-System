@@ -37,14 +37,31 @@ docs/
 │   └── database-design.md         # Mô hình dữ liệu quan hệ, quy ước và trạng thái hiện tại
 │
 ├── api/                           # Đặc tả giao tiếp RESTful API
-│   ├── README.md                  # Quy ước API, chuẩn phản hồi & danh mục endpoint
-│   └── api-contract.md            # Chi tiết hợp đồng các REST endpoints (MVP)
+│   ├── README.md                  # Quy ước API, phân bổ quyền sở hữu & chỉ mục
+│   ├── api-contract.md            # Hợp đồng tổng thể & xác thực Auth (Owner: W2-T1)
+│   ├── profile.md                 # Hợp đồng hồ sơ ứng viên & kỹ năng (Owner: W2-T2)
+│   └── taxonomy.md                # Hợp đồng danh mục nghề nghiệp & kỹ năng (Owner: W2-T3)
 │
 ├── decisions/                     # Hồ sơ quyết định kiến trúc (ADR)
 │   ├── README.md
 │   ├── ADR-0001-baseline-tech-stack.md
 │   ├── ADR-0002-database-migration-tool.md
 │   └── ADR-TEMPLATE.md            # Mẫu chuẩn bị và ghi nhận quyết định kiến trúc
+│
+├── adr/                           # Hồ sơ quyết định kiến trúc (ADR) mới (ADR-0004..0009)
+│   ├── README.md                  # Mục lục ADR mở rộng
+│   ├── ADR-0004-error-response-and-exception-consolidation.md
+│   ├── ADR-0005-entity-user-consolidation-and-modular-boundaries.md
+│   ├── ADR-0006-role-based-access-control-and-security-strategy.md
+│   ├── ADR-0007-flyway-migration-numbering-and-seed-data.md
+│   ├── ADR-0008-frontend-architecture-and-state-management.md
+│   └── ADR-0009-docker-and-environment-variable-contract.md
+│
+├── audit/                         # Báo cáo thẩm định kỹ thuật độc lập
+│   └── week1-audit.md             # Báo cáo thẩm định kỹ thuật sau Tuần 1
+│
+├── plan/                          # Kế hoạch chi tiết tác vụ các Sprint
+│   └── week2-tasks.md             # Kế hoạch phân công 6 tác vụ Tuần 2 & Ma trận xung đột
 │
 ├── planning/                      # Kế hoạch phát triển và phân công công việc
 │   ├── README.md
