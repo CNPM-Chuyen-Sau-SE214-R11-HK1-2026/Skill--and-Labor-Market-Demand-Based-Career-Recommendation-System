@@ -14,7 +14,7 @@
 > [!IMPORTANT]
 > Toàn bộ các thao tác trong phân hệ `/api/v1/profile/**` **tuyệt đối không** chấp nhận tham số `userId` trên URL đường dẫn (path variable) hoặc trong request body. Định danh ứng viên (`userId`) bắt buộc phải được trích xuất trực tiếp và duy nhất từ đối tượng `Authentication` (chứa `AuthenticatedUser`) đã được Spring Security xác thực trong ngữ cảnh phiên làm việc (`SecurityContextHolder`).
 >
-> Ứng viên chỉ được phép xem, sửa đổi hồ sơ và kỹ năng thuộc sở hữu của chính mình. Controller được bảo vệ bằng `@PreAuthorize("hasRole('CANDIDATE')")`.
+> Ứng viên chỉ được phép xem, sửa đổi hồ sơ và kỹ năng thuộc sở hữu của chính mình. Controller được bảo vệ bằng `@PreAuthorize("hasRole('CANDIDATE')")`. Mọi endpoint trả 401 khi thiếu token hợp lệ và 403 khi vai trò không phải Candidate. Request body chứa trường ngoài hợp đồng bị từ chối với 400.
 
 ---
 
@@ -33,8 +33,8 @@
     {
       "timestamp": "2026-11-03T10:00:00Z",
       "status": 404,
-      "error": "Not Found",
-      "message": "Hồ sơ ứng viên chưa được khởi tạo. Vui lòng cập nhật thông tin hồ sơ lần đầu qua PUT /api/v1/profile",
+      "error": "PROFILE_NOT_FOUND",
+      "message": "Hồ sơ ứng viên chưa được khởi tạo. Vui lòng cập nhật qua PUT /api/v1/profile.",
       "path": "/api/v1/profile",
       "errors": []
     }
@@ -45,7 +45,6 @@
     "id": 1,
     "userId": 1,
     "headline": "Junior Software Engineer",
-    "educationLevel": "BACHELOR",
     "yearsOfExperience": 1,
     "expectedSalaryMin": 15000000,
     "expectedSalaryMax": 25000000,
@@ -62,14 +61,18 @@
 
 ### 2.2. `PUT /api/v1/profile`
 * **Mã thao tác (Operation ID):** `updateCandidateProfile`
-* **Mô tả:** Tạo mới (nếu chưa có) hoặc cập nhật thông tin học vấn, kinh nghiệm và nguyện vọng nghề nghiệp.
+* **Mô tả:** Tạo mới (nếu chưa có) hoặc cập nhật thông tin kinh nghiệm và nguyện vọng nghề nghiệp.
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
+
+> [!NOTE]
+> Ví dụ ban đầu có `educationLevel`, nhưng V1, thiết kế CSDL và entity hiện hành chưa có nơi lưu. Trường này đang chờ chốt schema, tập giá trị và quy tắc null. Bản triển khai hiện hành chỉ chấp nhận các trường trong ví dụ dưới đây.
+
+* **Kiểu dữ liệu và null:** Lương là số thập phân theo `NUMERIC(12,2)`. Kinh nghiệm là số thập phân theo `NUMERIC(4,1)`. `workMode` nhận `REMOTE | HYBRID | ONSITE`. PUT thay thế các trường công khai của hồ sơ. Trường bỏ qua hoặc null dùng mặc định V1 là `0` cho kinh nghiệm và `HYBRID` cho chế độ làm việc. Headline, địa điểm, ngành và hai cận lương có thể để null.
 * **Validation:** Bắt buộc `expectedSalaryMin <= expectedSalaryMax` (nếu cả hai được cung cấp); `yearsOfExperience >= 0`.
 * **Request Body:**
   ```json
   {
     "headline": "Fullstack Java & React Developer",
-    "educationLevel": "BACHELOR",
     "yearsOfExperience": 2,
     "expectedSalaryMin": 18000000,
     "expectedSalaryMax": 30000000,
@@ -85,7 +88,7 @@
 
 ### 2.3. `GET /api/v1/profile/skills`
 * **Mã thao tác (Operation ID):** `getCandidateSkills`
-* **Mô tả:** Lấy danh sách kỹ năng cá nhân đã khai báo kèm mức độ thành thạo của ứng viên hiện tại.
+* **Mô tả:** Lấy danh sách kỹ năng cá nhân đã khai báo kèm mức độ thành thạo của ứng viên hiện tại. Kỹ năng được lưu theo tài khoản, nên toàn bộ các thao tác kỹ năng hoạt động trước khi tạo hồ sơ. Khi chưa khai báo kỹ năng, GET trả `[]`.
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
 * **Phản hồi thành công (`200 OK`):**
   ```json
@@ -129,7 +132,7 @@
 * **Validation:**
   * `skillId`: Long, bắt buộc, > 0.
   * `proficiencyLevel`: Enum `BEGINNER | INTERMEDIATE | ADVANCED | EXPERT`, bắt buộc.
-  * `yearsExperience`: Double, tùy chọn, $\ge 0$.
+  * `yearsExperience`: Số thập phân theo `NUMERIC(4,1)`, tùy chọn, không âm. Bỏ qua hoặc null dùng mặc định `0` của V1.
 * **Phản hồi thành công (`201 Created`):**
   ```json
   {
@@ -152,7 +155,7 @@
 * **Mã thao tác (Operation ID):** `updateCandidateSkill`
 * **Mô tả:** Cập nhật mức độ thành thạo hoặc số năm kinh nghiệm của một kỹ năng đã có trong hồ sơ ứng viên.
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
-* **Tham số đường dẫn (Path Variable):** `skillId` (Long, ID kỹ năng trong hồ sơ).
+* **Tham số đường dẫn (Path Variable):** `skillId` (Long dương, khóa chính `skills.id` trong danh mục. Bản ghi được xác định theo cặp `(userId, skillId)`).
 * **Request Body:**
   ```json
   {
@@ -160,7 +163,7 @@
     "yearsExperience": 2.5
   }
   ```
-* **Phản hồi thành công (`200 OK`):** Đối tượng kỹ năng sau khi cập nhật.
+* **Phản hồi thành công (`200 OK`):** Đối tượng kỹ năng theo cấu trúc ở mục 2.3. Chỉ cập nhật trường khác null được gửi trong body. Thiếu hoặc null giữ nguyên giá trị cũ. Thiếu liên kết thuộc ứng viên hiện tại trả 404.
 * **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `404 Not Found`.
 
 ---
@@ -169,6 +172,6 @@
 * **Mã thao tác (Operation ID):** `deleteCandidateSkill`
 * **Mô tả:** Xóa một kỹ năng khỏi hồ sơ ứng viên.
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
-* **Tham số đường dẫn (Path Variable):** `skillId` (Long).
+* **Tham số đường dẫn (Path Variable):** `skillId` (Long dương, `skills.id` trong danh mục).
 * **Phản hồi thành công (`204 No Content`)**
-* **Mã lỗi dự kiến:** `401 Unauthorized`, `404 Not Found`.
+* **Mã lỗi dự kiến:** `400 Bad Request` nếu ID sai định dạng hoặc không dương, `401 Unauthorized`, `404 Not Found` nếu ứng viên không có kỹ năng này.
