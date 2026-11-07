@@ -1,6 +1,6 @@
 package com.cnpm.careerrecommendation.common.security;
 
-import com.cnpm.careerrecommendation.module.auth.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.Role;
 import java.security.Principal;
 
 /** Identity for downstream modules; userId must come from this authenticated principal. */

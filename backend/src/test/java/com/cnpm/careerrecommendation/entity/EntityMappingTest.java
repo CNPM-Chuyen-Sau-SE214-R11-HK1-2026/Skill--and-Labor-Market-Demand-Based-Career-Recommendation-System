@@ -1,5 +1,12 @@
 package com.cnpm.careerrecommendation.entity;
 
+import com.cnpm.careerrecommendation.common.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.Skill;
+import com.cnpm.careerrecommendation.common.entity.SkillCategory;
+import com.cnpm.careerrecommendation.common.entity.User;
+import com.cnpm.careerrecommendation.common.repository.SkillCategoryRepository;
+import com.cnpm.careerrecommendation.common.repository.SkillRepository;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import com.cnpm.careerrecommendation.repository.*;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -197,4 +204,3 @@ class EntityMappingTest {
         assertEquals(0, indicator.getOpenJobPostingsCount());
     }
 }
-

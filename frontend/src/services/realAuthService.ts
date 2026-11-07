@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
+import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
 
 /**
  * Real backend authentication service connecting via apiClient.

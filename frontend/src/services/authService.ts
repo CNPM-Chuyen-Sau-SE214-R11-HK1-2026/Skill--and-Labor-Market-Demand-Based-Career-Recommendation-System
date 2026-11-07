@@ -1,5 +1,5 @@
 import { env } from '../config/env';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
+import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
 import { realAuthService } from './realAuthService';
 import { mockAuthService } from './mock/mockAuthService';
 

@@ -1,7 +1,7 @@
 package com.cnpm.careerrecommendation.module.auth.dto;
 
-import com.cnpm.careerrecommendation.module.auth.entity.Role;
-import com.cnpm.careerrecommendation.module.auth.entity.User;
+import com.cnpm.careerrecommendation.common.entity.Role;
+import com.cnpm.careerrecommendation.common.entity.User;
 
 public record LoginResponse(String accessToken, String tokenType, long expiresIn, LoginUser user) {
     public record LoginUser(Long id, String email, String fullName, Role role) {

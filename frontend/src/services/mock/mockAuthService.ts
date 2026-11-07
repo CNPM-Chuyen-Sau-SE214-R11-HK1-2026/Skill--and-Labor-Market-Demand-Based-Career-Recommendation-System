@@ -1,4 +1,4 @@
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../../types/auth';
+import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../../types/auth';
 
 /**
  * Isolated mock auth service.

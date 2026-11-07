@@ -1,11 +1,11 @@
 package com.cnpm.careerrecommendation.module.auth.service;
 
+import com.cnpm.careerrecommendation.common.entity.User;
 import com.cnpm.careerrecommendation.common.exception.ApiException;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import com.cnpm.careerrecommendation.common.security.AuthenticatedUser;
 import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
 import com.cnpm.careerrecommendation.module.auth.dto.*;
-import com.cnpm.careerrecommendation.module.auth.entity.User;
-import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
 import java.sql.SQLException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -59,6 +59,9 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public CurrentUserResponse currentUser(AuthenticatedUser identity) {
+        if (identity == null) {
+            throw new BadCredentialsException("Yêu cầu token Bearer hợp lệ");
+        }
         return users.findById(identity.userId()).filter(User::isActive)
                 .map(CurrentUserResponse::from)
                 .orElseThrow(() -> new BadCredentialsException("Invalid user"));

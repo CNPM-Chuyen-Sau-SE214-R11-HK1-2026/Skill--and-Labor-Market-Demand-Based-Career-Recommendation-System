@@ -1,5 +1,8 @@
 package com.cnpm.careerrecommendation.entity;
 
+import com.cnpm.careerrecommendation.common.entity.Skill;
+import com.cnpm.careerrecommendation.common.entity.User;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

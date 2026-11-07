@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
+import type { AuthResponse, LoginRequest, RegisterRequest, User } from '../types/auth';
 import { authService } from '../services/authService';
 import { resetUnauthorizedHandling } from '../services/api';
 import { tokenStorage } from '../utils/tokenStorage';

@@ -17,9 +17,17 @@ export const Header: React.FC = () => {
           <Link to="/" className={styles.navLink}>
             Trang chủ
           </Link>
+          <Link to="/occupations" className={styles.navLink}>
+            Khám phá nghề nghiệp
+          </Link>
           {isAuthenticated && (
             <Link to="/dashboard" className={styles.navLink}>
               Dashboard
+            </Link>
+          )}
+          {isAuthenticated && user?.role === 'ROLE_ADMIN' && (
+            <Link to="/admin" className={styles.navLink}>
+              Quản trị
             </Link>
           )}
         </nav>

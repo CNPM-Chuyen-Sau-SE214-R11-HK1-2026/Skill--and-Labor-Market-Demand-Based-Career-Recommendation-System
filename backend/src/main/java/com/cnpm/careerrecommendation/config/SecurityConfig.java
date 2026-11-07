@@ -1,26 +1,26 @@
 package com.cnpm.careerrecommendation.config;
 
+import com.cnpm.careerrecommendation.common.entity.User;
 import com.cnpm.careerrecommendation.common.security.JwtAuthenticationFilter;
+import com.cnpm.careerrecommendation.common.security.JwtTokenProvider;
 import com.cnpm.careerrecommendation.common.security.SecurityErrorHandler;
-import com.cnpm.careerrecommendation.module.auth.repository.UserRepository;
-import jakarta.servlet.DispatcherType;
-import java.util.Arrays;
-import java.util.List;
+import com.cnpm.careerrecommendation.common.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,91 +33,118 @@ import org.springframework.web.cors.DefaultCorsProcessor;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/**
+ * Baseline Spring Security configuration establishing stateless security filter chain,
+ * public endpoint access (such as /api/health), CORS integration, and standardized error responses.
+ * Enforces method-level security and protects all authenticated resources.
+ */
 @Configuration
-@EnableMethodSecurity
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    @Bean
-    PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
 
-    @Bean
-    UserDetailsService userDetailsService(UserRepository users) {
-        return email -> users.findByEmailIgnoreCase(email)
-                .map(user -> User.withUsername(user.getEmail()).password(user.getPasswordHash())
-                        .authorities(user.getRole().name()).disabled(!user.isActive()).build())
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+    private final CorsProperties corsProperties;
+    private final ObjectMapper objectMapper;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
+    private final SecurityErrorHandler securityErrorHandler;
+
+    public SecurityConfig(CorsProperties corsProperties,
+                          ObjectMapper objectMapper,
+                          JwtTokenProvider jwtTokenProvider,
+                          UserRepository userRepository,
+                          SecurityErrorHandler securityErrorHandler) {
+        this.corsProperties = corsProperties;
+        this.objectMapper = objectMapper;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.securityErrorHandler = securityErrorHandler;
     }
 
     @Bean
-    AuthenticationManager authenticationManager(UserDetailsService details, PasswordEncoder encoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(details);
-        provider.setPasswordEncoder(encoder);
-        return new ProviderManager(provider);
-    }
-
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwt,
-                                            SecurityErrorHandler errors, CorsFilter corsFilter) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsFilter corsFilter) throws Exception {
+        http
+                .cors(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .requestCache(cache -> cache.disable())
-                .formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
-                .logout(logout -> logout.disable())
-                .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
-                .authorizeHttpRequests(auth -> auth
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/health", "/api/v1/occupations",
-                                "/api/v1/occupations/*", "/api/v1/skills").permitAll()
-                        .requestMatchers("/api/v1/auth/me").hasAnyRole("CANDIDATE", "ADMIN")
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(securityErrorHandler)
+                        .accessDeniedHandler(securityErrorHandler)
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        // Health check endpoint (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                        // Public auth endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
+                        // Public taxonomy GETs
+                        .requestMatchers(HttpMethod.GET, "/api/v1/occupations/**", "/api/v1/skills").permitAll()
+                        // Role-based authorization
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/profile", "/api/v1/profile/**", "/api/v1/recommendations",
-                                "/api/v1/recommendations/**").hasRole("CANDIDATE")
-                        .anyRequest().denyAll())
-                .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(corsFilter, JwtAuthenticationFilter.class).build();
+                        .requestMatchers("/api/v1/profile/**", "/api/v1/recommendations/**").hasRole("CANDIDATE")
+                        // All other endpoints require authentication (/api/v1/auth/me, etc.)
+                        .anyRequest().authenticated()
+                );
+
+        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(
+                jwtTokenProvider, userRepository, securityErrorHandler);
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(corsFilter, JwtAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
-    FilterRegistrationBean<JwtAuthenticationFilter> jwtServletRegistration(JwtAuthenticationFilter jwt) {
-        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(jwt);
-        registration.setEnabled(false); // Only execute inside Spring Security, never twice as a servlet filter.
-        return registration;
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
+        configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
+        configuration.setAllowCredentials(corsProperties.isAllowCredentials());
+        configuration.setMaxAge(corsProperties.getMaxAge());
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
-    CorsFilter corsFilter(@Qualifier("corsConfigurationSource") CorsConfigurationSource source,
-                          SecurityErrorHandler errors) {
-        CorsFilter filter = new CorsFilter(source);
+    public CorsFilter corsFilter(CorsConfigurationSource corsConfigurationSource) {
+        CorsFilter filter = new CorsFilter(corsConfigurationSource);
         filter.setCorsProcessor((config, request, response) -> new DefaultCorsProcessor() {
             @Override
             protected void rejectRequest(ServerHttpResponse ignored) throws IOException {
-                errors.rejectCors(request, response);
+                securityErrorHandler.rejectCors(request, response);
             }
         }.processRequest(config, request, response));
         return filter;
     }
 
     @Bean
-    FilterRegistrationBean<CorsFilter> corsServletRegistration(CorsFilter filter) {
-        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(filter);
-        registration.setEnabled(false); // Security runs CORS before authentication.
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration(CorsFilter corsFilter) {
+        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(corsFilter);
+        registration.setEnabled(false);
         return registration;
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(
-            @Value("${security.cors.allowed-origins}") String origins) {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::strip)
-                .filter(origin -> !origin.isEmpty()).toList());
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        config.setAllowCredentials(false); // Authentication uses an explicit Bearer header, never a session cookie.
-        config.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return email -> userRepository.findByEmailIgnoreCase(email)
+                .filter(User::isActive)
+                .map(user -> org.springframework.security.core.userdetails.User.builder()
+                        .username(user.getEmail())
+                        .password(user.getPasswordHash())
+                        .authorities(user.getRole().name())
+                        .build())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }
