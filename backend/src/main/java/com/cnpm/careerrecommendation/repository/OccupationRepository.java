@@ -1,7 +1,11 @@
 package com.cnpm.careerrecommendation.repository;
 
 import com.cnpm.careerrecommendation.entity.Occupation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,5 +26,22 @@ public interface OccupationRepository extends JpaRepository<Occupation, Long> {
     List<Occupation> findByIndustry(String industry);
 
     List<Occupation> findByTitleContainingIgnoreCase(String keyword);
-}
 
+    @Query(
+        value = """
+            SELECT o FROM Occupation o LEFT JOIN FETCH o.group
+            WHERE (:groupId IS NULL OR o.group.id = :groupId)
+              AND (:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%'))))
+        """,
+        countQuery = """
+            SELECT COUNT(o) FROM Occupation o
+            WHERE (:groupId IS NULL OR o.group.id = :groupId)
+              AND (:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%'))))
+        """
+    )
+    Page<Occupation> searchOccupations(@Param("groupId") Long groupId,
+                                       @Param("keyword") String keyword,
+                                       Pageable pageable);
+}

@@ -19,5 +19,8 @@ public interface MarketDemandIndicatorRepository extends JpaRepository<MarketDem
     Optional<MarketDemandIndicator> findByOccupationIdAndRegionAndSnapshotDate(Long occupationId, String region, LocalDate snapshotDate);
 
     List<MarketDemandIndicator> findByOccupationIdAndRegionOrderBySnapshotDateDesc(Long occupationId, String region);
-}
 
+    Optional<MarketDemandIndicator> findFirstByOccupationIdOrderBySnapshotDateDesc(Long occupationId);
+
+    Optional<MarketDemandIndicator> findFirstByOccupationIdAndRegionOrderBySnapshotDateDesc(Long occupationId, String region);
+}
