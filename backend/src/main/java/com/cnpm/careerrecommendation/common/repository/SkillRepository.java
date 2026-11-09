@@ -20,4 +20,6 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     List<Skill> findByCategoryId(Long categoryId);
 
     List<Skill> findByNameContainingIgnoreCase(String name);
+
+    List<Skill> findByCategoryIdAndNameContainingIgnoreCase(Long categoryId, String name);
 }

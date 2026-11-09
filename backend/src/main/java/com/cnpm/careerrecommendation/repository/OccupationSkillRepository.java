@@ -2,6 +2,8 @@ package com.cnpm.careerrecommendation.repository;
 
 import com.cnpm.careerrecommendation.entity.OccupationSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,5 +22,13 @@ public interface OccupationSkillRepository extends JpaRepository<OccupationSkill
     boolean existsByOccupationIdAndSkillId(Long occupationId, Long skillId);
 
     void deleteByOccupationIdAndSkillId(Long occupationId, Long skillId);
-}
 
+    @Query("""
+        SELECT os FROM OccupationSkill os
+        JOIN FETCH os.skill s
+        LEFT JOIN FETCH s.category
+        WHERE os.occupation.id = :occupationId
+        ORDER BY os.importanceWeight DESC
+    """)
+    List<OccupationSkill> findByOccupationIdWithSkills(@Param("occupationId") Long occupationId);
+}
