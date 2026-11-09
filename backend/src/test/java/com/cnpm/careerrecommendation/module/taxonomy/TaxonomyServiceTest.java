@@ -81,8 +81,8 @@ class TaxonomyServiceTest {
 
         MarketDemandIndicator lmi = new MarketDemandIndicator(occ, "NATIONAL", new BigDecimal("88.50"), LocalDate.now());
         lmi.setGrowthRatePct(new BigDecimal("12.40"));
-        when(marketDemandIndicatorRepository.findFirstByOccupationIdOrderBySnapshotDateDesc(101L))
-            .thenReturn(Optional.of(lmi));
+        when(marketDemandIndicatorRepository.findLatestByOccupationIds(List.of(101L)))
+            .thenReturn(List.of(lmi));
 
         PageResponse<OccupationSummaryResponse> response = taxonomyService.searchOccupations("Developer", 1L, pageable);
 
@@ -226,4 +226,3 @@ class TaxonomyServiceTest {
         assertEquals("O*NET", results.get(1).standardSource());
     }
 }
-

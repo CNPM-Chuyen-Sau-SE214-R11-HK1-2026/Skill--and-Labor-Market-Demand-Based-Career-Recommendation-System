@@ -2,6 +2,8 @@ package com.cnpm.careerrecommendation.repository;
 
 import com.cnpm.careerrecommendation.entity.MarketDemandIndicator;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -23,4 +25,11 @@ public interface MarketDemandIndicatorRepository extends JpaRepository<MarketDem
     Optional<MarketDemandIndicator> findFirstByOccupationIdOrderBySnapshotDateDesc(Long occupationId);
 
     Optional<MarketDemandIndicator> findFirstByOccupationIdAndRegionOrderBySnapshotDateDesc(Long occupationId, String region);
+
+    @Query("""
+        SELECT m FROM MarketDemandIndicator m
+        WHERE m.occupation.id IN :occupationIds
+        ORDER BY m.snapshotDate DESC
+    """)
+    List<MarketDemandIndicator> findLatestByOccupationIds(@Param("occupationIds") List<Long> occupationIds);
 }

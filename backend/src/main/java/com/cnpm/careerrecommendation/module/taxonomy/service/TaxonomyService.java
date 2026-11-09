@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service implementation for standard occupations and skills taxonomy.
@@ -56,6 +58,7 @@ public class TaxonomyService {
 
     /**
      * Search and paginate occupations by keyword and optional group filter.
+     * Uses batch LMI fetching to avoid N+1 queries.
      */
     public PageResponse<OccupationSummaryResponse> searchOccupations(String query, Long groupId, Pageable pageable) {
         validatePagination(pageable);
@@ -63,7 +66,20 @@ public class TaxonomyService {
         String keyword = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
         Page<Occupation> page = occupationRepository.searchOccupations(groupId, keyword, pageable);
 
-        Page<OccupationSummaryResponse> summaryPage = page.map(this::toSummaryResponse);
+        List<Long> occIds = page.getContent().stream()
+                .map(Occupation::getId)
+                .filter(id -> id != null)
+                .toList();
+
+        Map<Long, MarketDemandIndicator> lmiMap = occIds.isEmpty() ? Map.of() :
+                marketDemandIndicatorRepository.findLatestByOccupationIds(occIds).stream()
+                        .collect(Collectors.toMap(
+                                m -> m.getOccupation().getId(),
+                                m -> m,
+                                (existing, replacement) -> existing
+                        ));
+
+        Page<OccupationSummaryResponse> summaryPage = page.map(occ -> toSummaryResponse(occ, lmiMap.get(occ.getId())));
         return PageResponse.from(summaryPage);
     }
 
@@ -74,7 +90,7 @@ public class TaxonomyService {
         Occupation occ = occupationRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Nghề nghiệp", "id", id));
 
-        // Required and optional skills with weights
+        // Required and optional skills with weights (eager fetched via JOIN FETCH)
         List<OccupationSkill> occSkills = occupationSkillRepository.findByOccupationIdWithSkills(id);
         List<OccupationDetailResponse.OccupationSkillRequirementDto> skillDtos = occSkills.stream()
             .map(os -> new OccupationDetailResponse.OccupationSkillRequirementDto(
@@ -166,12 +182,9 @@ public class TaxonomyService {
             .toList();
     }
 
-    private OccupationSummaryResponse toSummaryResponse(Occupation occ) {
-        Optional<MarketDemandIndicator> lmiOpt = marketDemandIndicatorRepository
-            .findFirstByOccupationIdOrderBySnapshotDateDesc(occ.getId());
-
-        BigDecimal demandScore = lmiOpt.map(MarketDemandIndicator::getDemandScore).orElse(BigDecimal.ZERO);
-        BigDecimal growthRate = lmiOpt.map(MarketDemandIndicator::getGrowthRatePct).orElse(BigDecimal.ZERO);
+    private OccupationSummaryResponse toSummaryResponse(Occupation occ, MarketDemandIndicator lmi) {
+        BigDecimal demandScore = (lmi != null && lmi.getDemandScore() != null) ? lmi.getDemandScore() : BigDecimal.ZERO;
+        BigDecimal growthRate = (lmi != null && lmi.getGrowthRatePct() != null) ? lmi.getGrowthRatePct() : BigDecimal.ZERO;
         String groupName = (occ.getGroup() != null) ? occ.getGroup().getName() : null;
 
         return new OccupationSummaryResponse(
@@ -213,4 +226,3 @@ public class TaxonomyService {
         return "ESCO";
     }
 }
-
