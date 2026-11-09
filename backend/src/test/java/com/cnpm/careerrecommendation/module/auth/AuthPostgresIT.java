@@ -301,8 +301,5 @@ class AuthPostgresIT {
 
         @GetMapping("/api/v1/profile/_auth-test")
         AuthenticatedUser profile(@AuthenticationPrincipal AuthenticatedUser identity) { return identity; }
-
-        @GetMapping({"/api/v1/occupations", "/api/v1/skills"})
-        List<String> publicTaxonomy() { return List.of(); }
     }
 }
