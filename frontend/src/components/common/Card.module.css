@@ -1,0 +1,7 @@
+.card {
+  min-width: 0;
+  border: 1px solid var(--color-border, #e4eaf2);
+  border-radius: 18px;
+  background: var(--color-surface, #ffffff);
+  box-shadow: 0 8px 28px rgba(22, 42, 75, 0.055);
+}

@@ -16,3 +16,4 @@ public record OccupationSummaryResponse(
     BigDecimal demandScore,
     BigDecimal growthRatePct
 ) {}
+

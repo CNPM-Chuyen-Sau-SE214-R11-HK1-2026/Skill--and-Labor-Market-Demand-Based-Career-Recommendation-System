@@ -226,3 +226,4 @@ class TaxonomyServiceTest {
         assertEquals("O*NET", results.get(1).standardSource());
     }
 }
+

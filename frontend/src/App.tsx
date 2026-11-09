@@ -1,14 +1,9 @@
 import React from 'react';
-import './App.css';
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
 
 export const App: React.FC = () => {
-  return (
-    <main className="app-container">
-      <h1>Skill- and Labor Market Demand–Based Career Recommendation System</h1>
-      <p>Frontend skeleton initialized successfully.</p>
-      <span className="status-badge">System Status: Skeleton Initialized</span>
-    </main>
-  );
+  return <RouterProvider router={router} />;
 };
 
 export default App;

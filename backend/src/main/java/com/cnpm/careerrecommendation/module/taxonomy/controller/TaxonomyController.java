@@ -81,3 +81,4 @@ public class TaxonomyController {
         return Sort.by(property).ascending();
     }
 }
+

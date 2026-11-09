@@ -1,0 +1,96 @@
+
+# W2-T6 - Kiem thu tu dong Backend va Frontend
+name: CI - Backend and Frontend
+
+# Chay khi co Pull Request vao main hoac push len main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# CI chi can quyen doc ma nguon
+permissions:
+  contents: read
+
+jobs:
+  # JOB 1: Kiem thu Backend
+  backend-tests:
+    name: Backend - Unit Tests and PostgreSQL IT
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # PostgreSQL rieng cho moi lan chay CI
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: career_ci_test
+          POSTGRES_USER: ci_user
+          # Mat khau tam chi dung trong runner CI
+          POSTGRES_PASSWORD: ${{ github.run_id }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_user -d career_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+
+    env:
+      # Cau hinh duoc AuthPostgresIT su dung
+      AUTH_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/career_ci_test
+      AUTH_TEST_DATABASE_USER: ci_user
+      AUTH_TEST_DATABASE_PASSWORD: ${{ github.run_id }}
+
+    steps:
+      - name: Lay ma nguon tu GitHub
+        uses: actions/checkout@v4
+
+      - name: Cai dat Java 17 va Maven cache
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Chay Backend Unit Tests
+        run: mvn -B -ntp -f backend/pom.xml clean test
+
+      - name: Chay AuthPostgresIT voi PostgreSQL that
+        run: >-
+          mvn -B -ntp -f backend/pom.xml
+          -Ppostgres-it
+          test-compile
+          failsafe:integration-test
+          failsafe:verify
+
+  # JOB 2: Kiem tra Frontend build
+  frontend-build:
+    name: Frontend - TypeScript and Vite Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Lay ma nguon tu GitHub
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cai dat dependencies
+        run: npm ci
+
+      - name: Kiem tra TypeScript va build Vite
+        run: npm run build

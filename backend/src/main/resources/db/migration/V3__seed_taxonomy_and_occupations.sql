@@ -243,3 +243,4 @@ FROM (VALUES
 ) AS lmi(occ_code, region, demand_score, growth_rate_pct, open_job_postings_count, competitive_index, snapshot_date)
 JOIN occupations occ ON occ.code = lmi.occ_code
 ON CONFLICT (occupation_id, region, snapshot_date) DO NOTHING;
+

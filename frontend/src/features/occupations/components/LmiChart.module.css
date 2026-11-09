@@ -1,0 +1,170 @@
+.card {
+  padding: 25px;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.eyebrow {
+  color: #6682ad;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.heading h2 {
+  margin: 7px 0 0;
+  color: #1b3152;
+  font-size: 1.22rem;
+  line-height: 1.35;
+}
+
+.period {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: #526987;
+  background: #f1f5fa;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chartArea {
+  margin-top: 25px;
+  padding: 19px 18px 15px;
+  border: 1px solid #edf1f6;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+.chartLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartTitle {
+  display: block;
+  color: #304965;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.chartSubtitle {
+  display: block;
+  margin-top: 4px;
+  color: #96a2b1;
+  font-size: 0.73rem;
+}
+
+.score {
+  color: #2655a1;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.score small {
+  margin-left: 3px;
+  color: #8392a8;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 15px;
+  overflow: visible;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+  color: #9aa6b6;
+  font-size: 0.68rem;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.metric {
+  min-width: 0;
+  padding: 15px 15px 13px;
+  border: 1px solid #edf1f6;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.metricLabel {
+  display: block;
+  color: #7b8ba0;
+  font-size: 0.74rem;
+}
+
+.metricValue,
+.positive {
+  display: block;
+  margin-top: 7px;
+  color: #203b62;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.positive {
+  color: #16804a;
+}
+
+.metricHint {
+  display: block;
+  margin-top: 5px;
+  color: #9aa6b6;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+  margin-top: 17px;
+  padding-top: 13px;
+  border-top: 1px solid #edf1f6;
+  color: #7c899a;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 700px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .heading {
+    flex-direction: column;
+  }
+
+  .period {
+    align-self: flex-start;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .chartArea {
+    padding: 15px 12px 12px;
+  }
+}

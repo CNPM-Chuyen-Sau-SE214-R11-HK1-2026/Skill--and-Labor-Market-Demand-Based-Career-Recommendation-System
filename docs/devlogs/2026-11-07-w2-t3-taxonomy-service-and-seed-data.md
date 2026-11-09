@@ -81,3 +81,4 @@ Thực hiện toàn diện **Tác vụ Tuần 2: W2-T3 (Hiện thực hóa Dịc
 
 * [ ] Hỗ trợ Đoàn Việt Khang (W2-T5) tích hợp API thực tế vào màn hình `/occupations` và `/occupations/:id` thay thế dữ liệu mock.
 * [ ] Kiểm thử tích hợp runtime `TaxonomyPostgresIT` khi môi trường Docker Compose PostgreSQL sẵn sàng trong buổi kiểm thử hệ thống Thứ Bảy 2026-11-07.
+
