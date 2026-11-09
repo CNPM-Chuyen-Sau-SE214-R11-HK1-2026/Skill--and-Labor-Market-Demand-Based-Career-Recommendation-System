@@ -31,14 +31,16 @@ public interface OccupationRepository extends JpaRepository<Occupation, Long> {
         value = """
             SELECT o FROM Occupation o LEFT JOIN FETCH o.group
             WHERE (:groupId IS NULL OR o.group.id = :groupId)
-              AND (:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%'))))
+              AND (CAST(:keyword AS String) IS NULL
+                   OR LOWER(o.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS String), '%'))
+                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', CAST(:keyword AS String), '%'))))
         """,
         countQuery = """
             SELECT COUNT(o) FROM Occupation o
             WHERE (:groupId IS NULL OR o.group.id = :groupId)
-              AND (:keyword IS NULL OR LOWER(o.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', :keyword, '%'))))
+              AND (CAST(:keyword AS String) IS NULL
+                   OR LOWER(o.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS String), '%'))
+                   OR (o.description IS NOT NULL AND LOWER(o.description) LIKE LOWER(CONCAT('%', CAST(:keyword AS String), '%'))))
         """
     )
     Page<Occupation> searchOccupations(@Param("groupId") Long groupId,
