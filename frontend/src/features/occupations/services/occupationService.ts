@@ -1,3 +1,4 @@
+import { apiClient } from '../../../api/client';
 import type {
   OccupationDetail,
   OccupationSearchParams,
@@ -121,10 +122,8 @@ export async function getOccupationDetail(
     return mockGetOccupationDetail(id);
   }
 
-  return request<OccupationDetail>(
-    `/occupations/${id}`,
-    signal
-  );
+  const response = await apiClient.get<OccupationDetail>(`/occupations/${id}`, { signal });
+  return response.data;
 }
 
 /**

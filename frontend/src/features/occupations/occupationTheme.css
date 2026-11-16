@@ -1,0 +1,27 @@
+.occ-theme {
+  --occ-surface: #f6f8fe;
+  --occ-card: #ffffff;
+  --occ-container: #e9effb;
+  --occ-tonal-surface: var(--color-primary-light);
+  --occ-primary: var(--color-primary);
+  --occ-primary-hover: var(--color-primary-hover);
+  --occ-primary-container: #d9e7ff;
+  --occ-secondary-container: #e0eaff;
+  --occ-rose: #f4e7e5;
+  --occ-rose-ink: #773f42;
+  --occ-ink: #16233a;
+  --occ-muted: #4b5b74;
+  --occ-outline: #ccd8ea;
+  --occ-secondary: #496d9e;
+  --occ-shadow: #162c551c;
+  --occ-focus: var(--occ-primary);
+  min-height: 65vh;
+  color: var(--occ-ink);
+  background: var(--occ-surface);
+  font-family: Roboto, var(--font-sans);
+}
+
+.occ-theme :is(a, button, input, select):focus-visible {
+  outline: 2px solid var(--occ-focus);
+  outline-offset: 3px;
+}

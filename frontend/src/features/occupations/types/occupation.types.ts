@@ -27,6 +27,13 @@ export interface OccupationMarketIndicators {
   sourceName: string | null;
 }
 
+export interface OccupationMarketPoint {
+  period: string;
+  region: string | null;
+  demandScore: number | null;
+  openingsCount: number | null;
+}
+
 export interface OccupationSkill {
   skillId: number;
   skillCode: string;
@@ -47,6 +54,8 @@ export interface OccupationDetail extends Omit<
   };
   marketIndicators: OccupationMarketIndicators | null;
   skills: OccupationSkill[];
+  // UI fixture series. The current detail API only returns marketIndicators.
+  marketTrend?: OccupationMarketPoint[];
 }
 
 export interface OccupationSearchParams {
