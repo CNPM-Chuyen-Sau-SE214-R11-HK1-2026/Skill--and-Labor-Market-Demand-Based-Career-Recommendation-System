@@ -146,8 +146,8 @@
 * **Mã lỗi dự kiến:**
   * `400 Bad Request`: Thiếu trường bắt buộc hoặc giá trị enum sai.
   * `401 Unauthorized`: Chưa đăng nhập hoặc token hết hạn.
-  * `404 Not Found`: Không tìm thấy kỹ năng có ID tương ứng trong bảng `skills`.
-  * `409 Conflict`: Kỹ năng này đã tồn tại trong hồ sơ của ứng viên.
+  * `404 Not Found` (`SKILL_NOT_FOUND`): Không tìm thấy kỹ năng có ID tương ứng trong bảng `skills`.
+  * `409 Conflict` (`SKILL_ALREADY_EXISTS`): Kỹ năng này đã tồn tại trong hồ sơ của ứng viên.
 
 ---
 
@@ -164,7 +164,7 @@
   }
   ```
 * **Phản hồi thành công (`200 OK`):** Đối tượng kỹ năng theo cấu trúc ở mục 2.3. Chỉ cập nhật trường khác null được gửi trong body. Thiếu hoặc null giữ nguyên giá trị cũ. Thiếu liên kết thuộc ứng viên hiện tại trả 404.
-* **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `404 Not Found`.
+* **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`).
 
 ---
 
@@ -174,4 +174,4 @@
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
 * **Tham số đường dẫn (Path Variable):** `skillId` (Long dương, `skills.id` trong danh mục).
 * **Phản hồi thành công (`204 No Content`)**
-* **Mã lỗi dự kiến:** `400 Bad Request` nếu ID sai định dạng hoặc không dương, `401 Unauthorized`, `404 Not Found` nếu ứng viên không có kỹ năng này.
+* **Mã lỗi dự kiến:** `400 Bad Request` nếu ID sai định dạng hoặc không dương, `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`) nếu ứng viên không có kỹ năng này.
