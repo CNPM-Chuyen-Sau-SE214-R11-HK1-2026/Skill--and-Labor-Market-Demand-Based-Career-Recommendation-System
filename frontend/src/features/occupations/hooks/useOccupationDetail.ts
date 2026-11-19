@@ -1,103 +1,39 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
+import { getOccupationDetail } from '../services/occupationService';
+import type { OccupationDetail } from '../types/occupation.types';
+import { getApiErrorMessage, isNotFoundError } from '../utils/apiError';
 
-import {
-  getApiErrorMessage,
-  isNotFoundError,
-} from '../utils/apiError';
+type DetailState =
+  | { status: 'loading' }
+  | { status: 'notFound' }
+  | { status: 'ready'; data: OccupationDetail }
+  | { status: 'error'; message: string };
 
-import {
-  occupationService,
-} from '../services/occupationService';
-
-import type {
-  OccupationDetail,
-} from '../types/occupation.types';
-
-interface UseOccupationDetailResult {
-  data: OccupationDetail | null;
-  loading: boolean;
-  error: string | null;
-  notFound: boolean;
-}
-
-export function useOccupationDetail(
-  id: number | null
-): UseOccupationDetailResult {
-  const [data, setData] =
-    useState<OccupationDetail | null>(null);
-
-  const [loading, setLoading] =
-    useState(id !== null);
-
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const [notFound, setNotFound] =
-    useState(false);
+export function useOccupationDetail(id: number | null) {
+  const [attempt, setAttempt] = useState(0);
+  const [result, setResult] = useState<{ id: number; attempt: number; state: DetailState }>();
 
   useEffect(() => {
-    if (
-      id === null ||
-      !Number.isSafeInteger(id) ||
-      id <= 0
-    ) {
-      setData(null);
-      setLoading(false);
-      setError('Mã nghề nghiệp không hợp lệ.');
-      setNotFound(false);
-      return;
-    }
+    if (id === null) return;
 
     const controller = new AbortController();
-    let active = true;
-
-    setLoading(true);
-    setError(null);
-    setNotFound(false);
-
-    occupationService
-      .getOccupationDetail(id, controller.signal)
-      .then((result: OccupationDetail) => {
-        if (active) {
-          setData(result);
-        }
-      })
-      .catch((cause: unknown) => {
-        if (active && !controller.signal.aborted) {
-          setData(null);
-
-          setError(getApiErrorMessage(cause));
-
-          setNotFound(
-            isNotFoundError(cause) ||
-            (
-              cause instanceof Error &&
-              cause.message
-                .toLocaleLowerCase('vi-VN')
-                .includes('không tìm thấy')
-            )
-          );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-      controller.abort();
+    const settle = (state: DetailState) => {
+      if (!controller.signal.aborted) setResult({ id, attempt, state });
     };
-  }, [id]);
 
-  return {
-    data,
-    loading,
-    error,
-    notFound,
-  };
+    getOccupationDetail(id, controller.signal).then(
+      (data) => settle({ status: 'ready', data }),
+      (error: unknown) => settle(isNotFoundError(error)
+        ? { status: 'notFound' }
+        : { status: 'error', message: getApiErrorMessage(error) }),
+    );
+
+    return () => controller.abort();
+  }, [id, attempt]);
+
+  let state: DetailState = { status: 'loading' };
+  if (id === null) state = { status: 'notFound' };
+  else if (result?.id === id && result.attempt === attempt) state = result.state;
+
+  return { state, retry: () => setAttempt((current) => current + 1) };
 }

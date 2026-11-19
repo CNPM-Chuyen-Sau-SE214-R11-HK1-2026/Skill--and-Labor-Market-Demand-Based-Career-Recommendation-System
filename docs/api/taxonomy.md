@@ -103,6 +103,11 @@ Dữ liệu được nạp thông qua bản di chuyển Flyway `V3__seed_taxonom
 * **Mã lỗi dự kiến:**
   * `404 Not Found`: Nghề nghiệp không tồn tại trong CSDL.
 
+* **Hiển thị tại frontend (W3-T5):** Trang `/occupations/:id` hiển thị
+  `marketIndicators` của kỳ mới nhất nếu có. Hợp đồng hiện tại chưa cung cấp
+  chuỗi theo thời gian hoặc phân vùng. Chế độ minh họa dùng dữ liệu riêng trong
+  [feature occupations](../../frontend/src/features/occupations/README.md).
+
 ---
 
 ### 2.3. `GET /api/v1/skills`
