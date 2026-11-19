@@ -24,7 +24,7 @@ export function buildMockOccupationDetail(item: OccupationSummary): OccupationDe
     code: item.code,
     title: item.title,
     groupName: item.groupName,
-    description: descriptions[item.id],
+    description: descriptions[item.id] ?? `${item.title} (${item.groupName}).`,
     salaryRange: { min: item.averageSalaryMin, max: item.averageSalaryMax, currency: 'VND' },
     marketIndicators: {
       demandScore: item.demandScore,
@@ -41,7 +41,7 @@ export function buildMockOccupationDetail(item: OccupationSummary): OccupationDe
       openingsCount: Math.round((openings - (periods.length - 1 - index) * 80) * region.share),
     }))),
     skills: [
-      { skillId: 1, skillCode: 'SK-CORE-01', skillName: coreSkills[item.id], importanceType: 'ESSENTIAL', weight: 1 },
+      { skillId: 1, skillCode: 'SK-CORE-01', skillName: coreSkills[item.id] ?? item.title, importanceType: 'ESSENTIAL', weight: 1 },
       { skillId: 2, skillCode: 'SK-DOC-01', skillName: 'Đọc tài liệu kỹ thuật', importanceType: 'ESSENTIAL', weight: 0.85 },
       { skillId: 3, skillCode: 'SK-COL-01', skillName: 'Cộng tác liên chức năng', importanceType: 'OPTIONAL', weight: 0.55 },
     ],

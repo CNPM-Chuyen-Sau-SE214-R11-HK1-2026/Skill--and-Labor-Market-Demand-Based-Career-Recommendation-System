@@ -12,7 +12,7 @@ const percent = new Intl.NumberFormat('vi-VN', { style: 'percent', maximumFracti
 function salaryLabel({ min, max, currency }: OccupationDetail['salaryRange']) {
   const money = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
-    currency,
+    currency: currency?.trim() || 'VND',
     maximumFractionDigits: 0,
   });
   if (min === null) return max === null ? 'Chưa cập nhật' : `Đến ${money.format(max)}`;
