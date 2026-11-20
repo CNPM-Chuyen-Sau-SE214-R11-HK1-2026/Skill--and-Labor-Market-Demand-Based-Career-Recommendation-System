@@ -1,0 +1,273 @@
+.pageContainer {
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.heroCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.heroInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1.25;
+}
+
+.mockBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #b45309;
+  background: var(--color-warning-bg);
+  border: 1px solid #fde68a;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.pageSubtitle {
+  margin: 0;
+  font-size: 0.94rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.accountMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.accountMeta strong {
+  color: var(--color-text-main);
+}
+
+.metaDot {
+  color: #cbd5e1;
+}
+
+/* Tab bar: hidden on Desktop (>= 1024px), visible on Mobile & Tablet (< 1024px) */
+.tabBar {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.tabButton {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabButtonActive {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--color-text-main);
+}
+
+.tabButtonActive .tabCount {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.unsavedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warning);
+}
+
+/* Desktop 2-column layout (>= 1024px) */
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.cardHeader {
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.cardDescription {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.skillsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* Blocker Dialog */
+.blockerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.blockerDialog {
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.blockerTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.blockerMessage {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.blockerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Tablet & Mobile (< 1024px): show tab bar, 1 column, hide inactive tab via CSS without unmounting */
+@media (max-width: 1023px) {
+  .tabBar {
+    display: grid;
+  }
+
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hiddenOnCompact {
+    display: none;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+  .pageContainer {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+    gap: var(--spacing-md);
+  }
+
+  .heroCard,
+  .card {
+    padding: 1.1rem;
+  }
+
+  .pageTitle {
+    font-size: 1.3rem;
+  }
+
+  .metaDot {
+    display: none;
+  }
+
+  .accountMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

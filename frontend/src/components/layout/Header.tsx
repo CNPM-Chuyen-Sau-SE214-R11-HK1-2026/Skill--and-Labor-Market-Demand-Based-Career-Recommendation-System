@@ -25,6 +25,11 @@ export const Header: React.FC = () => {
               Dashboard
             </Link>
           )}
+          {isAuthenticated && user?.role === 'ROLE_CANDIDATE' && (
+            <Link to="/profile" className={styles.navLink}>
+              Hồ sơ cá nhân
+            </Link>
+          )}
           {isAuthenticated && user?.role === 'ROLE_ADMIN' && (
             <Link to="/admin" className={styles.navLink}>
               Quản trị
