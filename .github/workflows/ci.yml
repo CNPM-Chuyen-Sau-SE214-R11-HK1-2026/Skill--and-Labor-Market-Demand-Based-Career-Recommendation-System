@@ -1,6 +1,6 @@
 
-# W2-T6 - Kiem thu tu dong Backend va Frontend
-name: CI - Backend and Frontend
+# W3-T6 - Backend, Frontend and Stage 1 Docker integration smoke tests
+name: CI - Backend, Frontend and Week 3 Integration
 
 # Chay khi co Pull Request vao main hoac push len main
 on:
@@ -94,3 +94,35 @@ jobs:
 
       - name: Kiem tra TypeScript va build Vite
         run: npm run build
+
+  # JOB 3: W3-T6 - integration smoke tests with real Docker services
+  # These are the 19 available-API checks. Full W3 E2E must be added
+  # once LMI Import, Recommendation and Skill Gap endpoints are merged.
+  week3-integration:
+    name: Week 3 - Docker API Integration (Stage 1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Generate isolated CI environment
+        shell: bash
+        run: |
+          # The existing Windows-authored shell script uses CRLF endings.
+          # Normalize only in this temporary CI checkout.
+          sed -i 's/\r$//' scripts/init-env.sh
+          bash scripts/init-env.sh
+          docker compose config --quiet
+
+      - name: Build Backend then Frontend images
+        shell: bash
+        run: |
+          docker compose --progress plain build backend
+          docker compose --progress plain build frontend
+
+      - name: Start PostgreSQL, Backend and Frontend
+        shell: bash
+        run: |
+          docker compose up -d --no-build --wait
