@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,8 @@ public interface MarketDemandIndicatorRepository extends JpaRepository<MarketDem
     List<MarketDemandIndicator> findByOccupationId(Long occupationId);
 
     Optional<MarketDemandIndicator> findByOccupationIdAndRegionAndSnapshotDate(Long occupationId, String region, LocalDate snapshotDate);
+
+    List<MarketDemandIndicator> findByOccupationIdInAndSnapshotDateIn(Collection<Long> occupationIds, Collection<LocalDate> snapshotDates);
 
     List<MarketDemandIndicator> findByOccupationIdAndRegionOrderBySnapshotDateDesc(Long occupationId, String region);
 
