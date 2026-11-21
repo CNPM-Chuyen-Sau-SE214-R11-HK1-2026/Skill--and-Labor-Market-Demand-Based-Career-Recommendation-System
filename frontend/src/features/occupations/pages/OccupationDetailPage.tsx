@@ -1,50 +1,136 @@
-import '../occupations.css';
-import { useEffect, useState } from 'react';
-import { OccupationChart } from '../components/OccupationChart';
-import { EmptyState, ErrorState, PageShell, Spinner } from '../components/OccupationUi';
-import { getOccupationDetail } from '../services/occupationService';
-import type { OccupationDetail } from '../types/occupation.types';
+import { Link, useParams } from 'react-router-dom';
+import { Card } from '../../../components/common/Card';
+import { LmiChart } from '../components/LmiChart';
+import { useOccupationDetail } from '../hooks/useOccupationDetail';
+import { isOccupationMockModeEnabled } from '../services/occupationService';
+import type { OccupationDetail, OccupationSkill } from '../types/occupation.types';
+import '../occupationTheme.css';
+import styles from './OccupationDetailPage.module.css';
 
-const money = (value: number | null): string => value === null ? 'Đang cập nhật' : `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+const percent = new Intl.NumberFormat('vi-VN', { style: 'percent', maximumFractionDigits: 1 });
+
+function salaryLabel({ min, max, currency }: OccupationDetail['salaryRange']) {
+  const money = new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: currency?.trim() || 'VND',
+    maximumFractionDigits: 0,
+  });
+  if (min === null) return max === null ? 'Chưa cập nhật' : `Đến ${money.format(max)}`;
+  if (max === null) return `Từ ${money.format(min)}`;
+  return `${money.format(min)} – ${money.format(max)}`;
+}
+
+function SkillGroup({ title, skills, core = false }: {
+  title: string;
+  skills: OccupationSkill[];
+  core?: boolean;
+}) {
+  return (
+    <section className={styles.skillGroup}>
+      <h3>{title}</h3>
+      {skills.length > 0 ? (
+        <ul className={styles.skills}>
+          {[...skills].sort((first, second) => (second.weight ?? -1) - (first.weight ?? -1)).map((skill) => (
+            <li className={core ? styles.coreSkill : undefined} key={skill.skillId}>
+              <div className={styles.skillInfo}>
+                <strong>{skill.skillName}</strong>
+                <span>{skill.weight === null ? 'Chưa có trọng số' : percent.format(skill.weight)}</span>
+              </div>
+              {skill.weight !== null && (
+                <meter min={0} max={1} value={skill.weight} aria-label={`Trọng số ${skill.skillName}`} />
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : <p className={styles.muted}>Chưa có kỹ năng trong nhóm này.</p>}
+    </section>
+  );
+}
+
+function DetailContent({ id }: { id: number | null }) {
+  const { state, retry } = useOccupationDetail(id);
+
+  if (state.status === 'loading') {
+    return (
+      <div role="status" aria-busy="true" className={styles.loading}>
+        <span>Đang tải thông tin nghề nghiệp…</span>
+        <div className={styles.skeleton} aria-hidden="true" />
+        <div className={styles.skeleton} aria-hidden="true" />
+      </div>
+    );
+  }
+
+  if (state.status === 'notFound') {
+    return (
+      <div className={styles.state}>
+        <h1>404 · Không tìm thấy nghề nghiệp</h1>
+        <p>Kiểm tra mã nghề hoặc chọn một nghề trong danh mục.</p>
+      </div>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <div className={styles.state} role="alert">
+        <h1>Không thể tải thông tin nghề nghiệp</h1>
+        <p>{state.message}</p>
+        <button type="button" onClick={retry}>Thử lại</button>
+      </div>
+    );
+  }
+
+  const { data } = state;
+  const skills = data.skills ?? [];
+  const required = skills.filter((skill) => skill.importanceType === 'ESSENTIAL' || skill.importanceType === 'CORE');
+  const optional = skills.filter((skill) => skill.importanceType === 'OPTIONAL');
+  const unclassified = skills.filter((skill) => !required.includes(skill) && !optional.includes(skill));
+
+  return (
+    <div className={styles.content}>
+      {isOccupationMockModeEnabled() && (
+        <p className={styles.mockNotice}>Đang hiển thị dữ liệu minh họa.</p>
+      )}
+      <header className={styles.hero}>
+        <div>
+          <div className={styles.category}>
+            <span>{data.groupName}</span>
+            <span>{data.code}</span>
+          </div>
+          <h1>{data.title}</h1>
+        </div>
+        <div className={styles.salary}>
+          <span>Mức lương tham chiếu</span>
+          <strong>{data.salaryRange ? salaryLabel(data.salaryRange) : 'Chưa cập nhật'}</strong>
+        </div>
+      </header>
+      <Card as="section" className={styles.description}>
+        <h2>Mô tả công việc</h2>
+        <p>{data.description?.trim() || 'Chưa có mô tả công việc.'}</p>
+      </Card>
+      <LmiChart indicators={data.marketIndicators} trend={data.marketTrend} />
+      <Card as="section" className={styles.skillCard}>
+        <h2>Kỹ năng yêu cầu</h2>
+        <div className={styles.skillGroups}>
+          <SkillGroup title="Kỹ năng cốt lõi · Bắt buộc" skills={required} core />
+          <SkillGroup title="Kỹ năng bổ trợ · Tùy chọn" skills={optional} />
+          {unclassified.length > 0 && <SkillGroup title="Kỹ năng chưa phân loại" skills={unclassified} />}
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 export default function OccupationDetailPage() {
-  const occupationId = Number(window.location.pathname.split('/').filter(Boolean).slice(-1)[0]);
-  const [data, setData] = useState<OccupationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { id } = useParams<'id'>();
+  const parsed = id && /^\d+$/.test(id) ? Number(id) : NaN;
+  const occupationId = Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 
-  useEffect(() => {
-    if (!Number.isSafeInteger(occupationId) || occupationId <= 0) { setError('Mã nghề nghiệp không hợp lệ.'); setLoading(false); return; }
-    const controller = new AbortController();
-    setLoading(true); setError('');
-    getOccupationDetail(occupationId, controller.signal)
-      .then(setData)
-      .catch((cause: unknown) => {
-        if (cause instanceof Error && cause.name === 'AbortError') return;
-        setError(cause instanceof Error ? cause.message : 'Đã xảy ra lỗi không xác định.');
-      })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [occupationId]);
-
-  if (loading) return <PageShell><Spinner label="Đang tải thông tin nghề nghiệp..." /></PageShell>;
-  if (error) return <PageShell><ErrorState message={error} onRetry={() => { setError(''); setLoading(true); getOccupationDetail(occupationId).then(setData).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : 'Không thể tải dữ liệu.')).finally(() => setLoading(false)); }} /></PageShell>;
-  if (!data) return <PageShell><EmptyState title="Không tìm thấy nghề nghiệp" description="Nghề nghiệp này không tồn tại hoặc đã bị gỡ khỏi danh mục." /></PageShell>;
-
-  const market = data.marketIndicators;
-  return <PageShell>
-    <a className="back-link" href="/occupations">← Quay lại danh mục nghề nghiệp</a>
-    <header className="detail-hero">
-      <span className="eyebrow">{data.code} · {data.groupName}</span>
-      <h1>{data.title}</h1>
-      <p>{data.description || 'Chưa có mô tả chi tiết cho nghề nghiệp này.'}</p>
-      <div className="detail-salary"><span>Mức lương tham khảo</span><strong>{money(data.salaryRange?.min ?? null)} – {money(data.salaryRange?.max ?? null)}</strong><small>{data.salaryRange?.currency || 'VND'}</small></div>
-    </header>
-    <OccupationChart demandScore={market?.demandScore ?? null} growthRatePct={market?.growthRatePct ?? null} shortageLevel={market?.shortageLevel ?? null} openingsCount={market?.openingsCount ?? null} />
-    <section className="skills-panel">
-      <div className="section-heading"><div><span className="eyebrow">SKILL REQUIREMENTS</span><h2>Kỹ năng cần có</h2></div><span className="result-count">{data.skills?.length ?? 0} kỹ năng</span></div>
-      {data.skills?.length ? <div className="skills-list">{data.skills.map((skill) => <article className="skill-row" key={skill.skillId}><div><strong>{skill.skillName}</strong><span>{skill.skillCode}</span></div><div className="skill-meta"><span className={`skill-tag ${skill.importanceType === 'ESSENTIAL' ? 'skill-tag--essential' : ''}`}>{skill.importanceType === 'ESSENTIAL' ? 'Cốt lõi' : 'Bổ trợ'}</span>{skill.weight !== null && <span className="skill-weight">Trọng số {skill.weight}</span>}</div></article>)}</div> : <EmptyState title="Chưa có dữ liệu kỹ năng" description="Danh sách kỹ năng yêu cầu sẽ xuất hiện khi dữ liệu được cập nhật." />}
-    </section>
-    <p className="data-source">Kỳ dữ liệu: {market?.dataPeriod || 'Chưa cập nhật'}{market?.sourceName ? ` · Nguồn: ${market.sourceName}` : ''}</p>
-  </PageShell>;
+  return (
+    <div className="occ-theme">
+      <div className={styles.page}>
+        <Link to="/occupations" className={styles.backLink}><span aria-hidden="true">←</span> Quay lại danh mục nghề nghiệp</Link>
+        <DetailContent key={occupationId} id={occupationId} />
+      </div>
+    </div>
+  );
 }
