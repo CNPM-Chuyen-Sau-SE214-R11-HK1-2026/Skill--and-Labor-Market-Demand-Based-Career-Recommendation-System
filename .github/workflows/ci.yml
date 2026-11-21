@@ -1,8 +1,7 @@
 
-# W3-T6 - Backend, Frontend and Stage 1 Docker integration smoke tests
+# W3-T6 - Backend, Frontend and Full Week 3 Integration
 name: CI - Backend, Frontend and Week 3 Integration
 
-# Chay khi co Pull Request vao main hoac push len main
 on:
   push:
     branches:
@@ -11,25 +10,22 @@ on:
     branches:
       - main
 
-# CI chi can quyen doc ma nguon
 permissions:
   contents: read
 
 jobs:
-  # JOB 1: Kiem thu Backend
+  # JOB 1: Backend unit tests and PostgreSQL integration tests
   backend-tests:
     name: Backend - Unit Tests and PostgreSQL IT
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # PostgreSQL rieng cho moi lan chay CI
     services:
       postgres:
         image: postgres:16-alpine
         env:
           POSTGRES_DB: career_ci_test
           POSTGRES_USER: ci_user
-          # Mat khau tam chi dung trong runner CI
           POSTGRES_PASSWORD: ${{ github.run_id }}
         ports:
           - 5432:5432
@@ -40,16 +36,15 @@ jobs:
           --health-retries 15
 
     env:
-      # Cau hinh duoc AuthPostgresIT su dung
       AUTH_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/career_ci_test
       AUTH_TEST_DATABASE_USER: ci_user
       AUTH_TEST_DATABASE_PASSWORD: ${{ github.run_id }}
 
     steps:
-      - name: Lay ma nguon tu GitHub
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Cai dat Java 17 va Maven cache
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -57,10 +52,10 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
 
-      - name: Chay Backend Unit Tests
+      - name: Run backend unit tests
         run: mvn -B -ntp -f backend/pom.xml clean test
 
-      - name: Chay AuthPostgresIT voi PostgreSQL that
+      - name: Run PostgreSQL integration tests
         run: >-
           mvn -B -ntp -f backend/pom.xml
           -Ppostgres-it
@@ -68,7 +63,7 @@ jobs:
           failsafe:integration-test
           failsafe:verify
 
-  # JOB 2: Kiem tra Frontend build
+  # JOB 2: Frontend build
   frontend-build:
     name: Frontend - TypeScript and Vite Build
     runs-on: ubuntu-latest
@@ -79,27 +74,25 @@ jobs:
         working-directory: frontend
 
     steps:
-      - name: Lay ma nguon tu GitHub
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Cai dat Node.js 20
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Cai dat dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Kiem tra TypeScript va build Vite
+      - name: Build frontend
         run: npm run build
 
-  # JOB 3: W3-T6 - integration smoke tests with real Docker services
-  # These are the 19 available-API checks. Full W3 E2E must be added
-  # once LMI Import, Recommendation and Skill Gap endpoints are merged.
+  # JOB 3: Full end-to-end API integration using Docker Compose
   week3-integration:
-    name: Week 3 - Docker API Integration (Stage 1)
+    name: Week 3 - Docker API Integration (Full E2E)
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -110,19 +103,66 @@ jobs:
       - name: Generate isolated CI environment
         shell: bash
         run: |
-          # The existing Windows-authored shell script uses CRLF endings.
-          # Normalize only in this temporary CI checkout.
+          set -euo pipefail
           sed -i 's/\r$//' scripts/init-env.sh
           bash scripts/init-env.sh
           docker compose config --quiet
 
-      - name: Build Backend then Frontend images
+      - name: Build Backend and Frontend images
         shell: bash
         run: |
+          set -euo pipefail
           docker compose --progress plain build backend
           docker compose --progress plain build frontend
 
-      - name: Start PostgreSQL, Backend and Frontend
+      - name: Start all services
         shell: bash
         run: |
+          set -euo pipefail
           docker compose up -d --no-build --wait
+          docker compose ps
+
+      - name: Verify Flyway V4 seed data
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stats=$(docker compose exec -T postgres sh -c \
+            'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tAc "SELECT COUNT(*), COUNT(DISTINCT occupation_id), COUNT(DISTINCT region) FROM market_demand_indicators;"')
+
+          IFS='|' read -r rows occupations regions <<< "$stats"
+
+          echo "LMI records: $rows"
+          echo "Distinct occupations: $occupations"
+          echo "Distinct regions: $regions"
+
+          if (( rows < 100 || occupations < 10 || regions < 4 )); then
+            echo "FAIL: LMI seed data does not meet W3-T6 requirements."
+            exit 1
+          fi
+
+          migration=$(docker compose exec -T postgres sh -c \
+            'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -tAc "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '\''4'\'' AND success = true;"')
+
+          if [[ "$migration" != "1" ]]; then
+            echo "FAIL: Flyway V4 migration not successful."
+            exit 1
+          fi
+
+          echo "PASS: Flyway V4 and LMI seed data verified."
+
+      - name: Run full W3-T6 API integration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pwsh -NoProfile -NonInteractive -File scripts/test-week3-integration.ps1
+
+      - name: Show Docker logs on failure
+        if: failure()
+        shell: bash
+        run: docker compose logs --tail=150
+
+      - name: Stop CI containers
+        if: always()
+        shell: bash
+        run: docker compose down --remove-orphans
