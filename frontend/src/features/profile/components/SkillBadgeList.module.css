@@ -1,0 +1,233 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summaryBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.countText {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.countText strong {
+  color: var(--color-text-main);
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.badgeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.skillTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  max-width: 100%;
+}
+
+.skillTag:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-sm);
+}
+
+.tagInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.skillName {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  word-break: break-word;
+}
+
+.tagMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.levelBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.levelBeginner {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.levelIntermediate {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.levelAdvanced {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.levelExpert {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.yearsBadge {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.tagActions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  min-width: 32px;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.iconBtn:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+}
+
+.deleteIconBtn {
+  font-size: 1.2rem;
+}
+
+.deleteIconBtn:hover:not(:disabled) {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.confirmBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.confirmDeleteBtn,
+.cancelDeleteBtn {
+  min-height: 30px;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.confirmDeleteBtn {
+  background: var(--color-error);
+  color: #ffffff;
+}
+
+.confirmDeleteBtn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.cancelDeleteBtn {
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  border-color: var(--color-border);
+}
+
+.cancelDeleteBtn:hover:not(:disabled) {
+  background: var(--color-bg);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem 1.25rem;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.emptyIcon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.emptyTitle {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.emptyDescription {
+  margin: 0 auto;
+  max-width: 420px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 767px) {
+  .skillTag {
+    width: 100%;
+  }
+
+  .iconBtn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+}
