@@ -316,8 +316,35 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Mô tả:** Quản lý danh sách tài khoản người dùng trong hệ thống.
 * **Module chịu trách nhiệm:** `admin`
 * **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
-* **Tham số:** `page`, `size`, `role`, `status`
-* **Phản hồi thành công (`200 OK`):** Danh sách người dùng phân trang.
+* **Tham số:** `page` (mặc định `0`), `size` (mặc định `20`, tối đa `100`), `email`, `role`, `active`; `status=ACTIVE|INACTIVE` được hỗ trợ tương đương `active` để tương thích hợp đồng ban đầu.
+* **Phản hồi thành công (`200 OK`):** `PageResponse<AdminUserResponse>` với các trường người dùng `id`, `email`, `fullName`, `role`, `active`, `createdAt`, `updatedAt`. Không trả `passwordHash`.
+* **Mã lỗi dự kiến:** `400 INVALID_PAGINATION`, `400 INVALID_ROLE`, `400 INVALID_USER_STATUS`, `401 Unauthorized`, `403 Forbidden`.
+
+---
+
+#### `PATCH /api/v1/admin/users/{id}/status`
+* **Mã thao tác (Operation ID):** `adminUpdateUserStatus`
+* **Quyền truy cập:** Yêu cầu `ROLE_ADMIN`.
+* **Request Body:** `{ "active": true|false }`.
+* **Phản hồi thành công (`200 OK`):** `AdminUserResponse` sau cập nhật.
+* **Quy tắc:** Thao tác idempotent; quản trị viên không được tự vô hiệu hóa tài khoản của chính mình.
+* **Mã lỗi dự kiến:** `400 SELF_DEACTIVATION_NOT_ALLOWED`, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
+
+---
+
+#### `PATCH /api/v1/admin/users/{id}/role`
+* **Mã thao tác (Operation ID):** `adminUpdateUserRole`
+* **Quyền truy cập:** Yêu cầu `ROLE_ADMIN`.
+* **Request Body:** `{ "role": "ROLE_CANDIDATE"|"ROLE_ADMIN" }`.
+* **Phản hồi thành công (`200 OK`):** `AdminUserResponse` sau cập nhật.
+* **Mã lỗi dự kiến:** `400 INVALID_ROLE`, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
+
+---
+
+#### `GET /api/v1/admin/stats`
+* **Mã thao tác (Operation ID):** `adminGetSystemStats`
+* **Quyền truy cập:** Yêu cầu `ROLE_ADMIN`.
+* **Phản hồi thành công (`200 OK`):** Tổng số `users`, `candidate_profiles`, `occupations`, `skills`, `market_demand_indicators` và `recommendation_logs` qua các trường `totalUsers`, `totalProfiles`, `totalOccupations`, `totalSkills`, `totalLmiRecords`, `totalRecommendationLogs`.
 * **Mã lỗi dự kiến:** `401 Unauthorized`, `403 Forbidden`.
 
 ---
