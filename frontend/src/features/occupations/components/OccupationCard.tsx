@@ -1,30 +1,30 @@
-import { Badge } from './Badge';
-import { Card } from './Card';
+import { Link } from 'react-router-dom';
 import type { OccupationSummary } from '../types/occupation.types';
+import { formatPercent, formatVndRange } from '../utils/formatters';
 
-interface OccupationCardProps { occupation: OccupationSummary; }
+const number = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 });
 
-const money = (value: number | null): string => value === null ? 'Đang cập nhật' : `${new Intl.NumberFormat('vi-VN').format(value)} ₫`;
+export function OccupationCard({ occupation }: { occupation: OccupationSummary }) {
+  const { id, code, title, groupName, demandScore, growthRatePct, averageSalaryMin, averageSalaryMax } = occupation;
 
-export function OccupationCard({ occupation }: OccupationCardProps) {
   return (
-    <Card className="occupation-card">
-      <a className="occupation-card__link" href={`/occupations/${occupation.id}`}>
+    <Link className="occupation-card" to={`/occupations/${id}`} aria-label={`Xem chi tiết ${title}`}>
       <div className="occupation-card__top">
-        <span className="occupation-code">{occupation.code}</span>
-        <Badge tone="success">{occupation.demandScore === null ? 'Chưa có điểm' : `Nhu cầu ${occupation.demandScore}/100`}</Badge>
+        <span className="occupation-code">{code}</span>
+        {demandScore !== null && <span className="occupation-demand">Nhu cầu {number.format(demandScore)}/100</span>}
       </div>
-      <h3>{occupation.title}</h3>
-      <p className="occupation-card__group">{occupation.groupName}</p>
+      <div>
+        <h3>{title}</h3>
+        <p className="occupation-card__group">{groupName}</p>
+      </div>
       <div className="occupation-card__salary">
-        <span>Mức lương tham khảo</span>
-        <strong>{money(occupation.averageSalaryMin)} – {money(occupation.averageSalaryMax)}</strong>
+        <span>Mức lương tham chiếu</span>
+        <strong>{formatVndRange(averageSalaryMin, averageSalaryMax)}</strong>
       </div>
       <div className="occupation-card__bottom">
-        <span>{occupation.growthRatePct === null ? 'Tăng trưởng: —' : `Tăng trưởng ${occupation.growthRatePct}%`}</span>
+        {growthRatePct !== null && <span>Tăng trưởng {formatPercent(growthRatePct)}</span>}
         <span className="text-link">Xem chi tiết <span aria-hidden="true">→</span></span>
       </div>
-      </a>
-    </Card>
+    </Link>
   );
 }

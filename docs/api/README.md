@@ -28,6 +28,11 @@ Nhằm đảm bảo nguyên tắc **Single Ownership** và tránh xung đột Gi
     * `GET /skills` (từ điển kỹ năng chuẩn hóa O*NET / ESCO).
     * Cơ chế truy cập công khai hoàn toàn (`permitAll()`).
 
+* [**`lmi.md`**](./lmi.md) *(Chủ sở hữu: **Huỳnh Long Bảo Khanh - W3-T3**)*:
+  * **Quản trị & Nạp Chỉ số Thị trường Lao động (`/api/v1/admin/lmi`):**
+    * `POST /admin/lmi/import` (nạp theo lô và upsert theo `(occupation_id, region, snapshot_date)`).
+    * Yêu cầu xác thực và phân quyền `ROLE_ADMIN` qua `@PreAuthorize("hasRole('ADMIN')")`.
+
 ---
 
 ## 2. Tiêu chuẩn thiết kế RESTful thống nhất

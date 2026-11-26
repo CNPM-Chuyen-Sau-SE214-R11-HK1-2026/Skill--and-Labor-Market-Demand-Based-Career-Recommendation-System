@@ -1,205 +1,147 @@
+import { useState } from 'react';
 import { Card } from '../../../components/common/Card';
-
-import type {
-  OccupationMarketIndicators,
-} from '../types/occupation.types';
-
-import {
-  formatInteger,
-  formatPercent,
-} from '../utils/formatters';
-
+import type { OccupationMarketIndicators, OccupationMarketPoint } from '../types/occupation.types';
+import { formatPercent } from '../utils/formatters';
 import styles from './LmiChart.module.css';
 
-interface LmiChartProps {
-  indicators: OccupationMarketIndicators;
-}
+type Metric = 'demandScore' | 'openingsCount';
 
-function clampScore(value: number | null): number {
-  if (value === null || !Number.isFinite(value)) {
-    return 0;
-  }
+const numberFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 });
+const labels: Record<Metric, string> = {
+  demandScore: 'Điểm nhu cầu (0–100)',
+  openingsCount: 'Số lượng tuyển dụng',
+};
 
-  return Math.min(100, Math.max(0, value));
-}
-
-export function LmiChart({
-  indicators,
-}: LmiChartProps) {
-  const demand = indicators.demandScore;
-
-  const visualScore = clampScore(demand);
-
-  const growth = indicators.growthRatePct;
-
-  const isPositiveGrowth =
-    growth !== null && growth > 0;
-
+function MarketBars({ points, metric, maximum }: {
+  points: OccupationMarketPoint[];
+  metric: Metric;
+  maximum: number;
+}) {
   return (
-    <Card
-      as="section"
-      className={styles.card}
-    >
-      <div className={styles.heading}>
-        <div>
-          <span className={styles.eyebrow}>
-            LABOR MARKET INDICATORS
-          </span>
+    <figure className={styles.figure}>
+      <figcaption>{labels[metric]}{metric === 'openingsCount' && <small> (0–{numberFormat.format(maximum)})</small>}</figcaption>
+      <ul className={styles.bars} aria-label={labels[metric]}>
+        {points.map((point) => {
+          const value = point[metric];
+          const height = Math.min(100, Math.max(0, ((value ?? 0) / maximum) * 100));
 
-          <h2>
-            Toàn cảnh nhu cầu thị trường
-          </h2>
-        </div>
-
-        {indicators.dataPeriod ? (
-          <span className={styles.period}>
-            {indicators.dataPeriod}
-          </span>
-        ) : null}
-      </div>
-
-      <div className={styles.chartArea}>
-        <div className={styles.chartLabels}>
-          <div>
-            <span className={styles.chartTitle}>
-              Điểm nhu cầu tuyển dụng
-            </span>
-
-            <span className={styles.chartSubtitle}>
-              Thang tham chiếu 0–100
-            </span>
-          </div>
-
-          <strong className={styles.score}>
-            {demand === null
-              ? '—'
-              : demand.toLocaleString('vi-VN', {
-                  maximumFractionDigits: 1,
-                })}
-
-            <small>/100</small>
-          </strong>
-        </div>
-
-        <svg
-          className={styles.svg}
-          viewBox="0 0 640 54"
-          role="img"
-          aria-label={
-            demand === null
-              ? 'Chưa có dữ liệu điểm nhu cầu'
-              : `Điểm nhu cầu tuyển dụng ${demand} trên 100`
-          }
-        >
-          <rect
-            x="0"
-            y="12"
-            width="640"
-            height="18"
-            rx="9"
-            fill="#e9eff7"
-          />
-
-          <rect
-            x="0"
-            y="12"
-            width={640 * visualScore / 100}
-            height="18"
-            rx="9"
-            fill="#3569bd"
-          />
-
-          <line
-            x1="160"
-            y1="8"
-            x2="160"
-            y2="34"
-            stroke="#ffffff"
-            strokeWidth="2"
-            opacity="0.9"
-          />
-
-          <line
-            x1="320"
-            y1="8"
-            x2="320"
-            y2="34"
-            stroke="#ffffff"
-            strokeWidth="2"
-            opacity="0.9"
-          />
-
-          <line
-            x1="480"
-            y1="8"
-            x2="480"
-            y2="34"
-            stroke="#ffffff"
-            strokeWidth="2"
-            opacity="0.9"
-          />
-        </svg>
-
-        <div className={styles.scale}>
-          <span>0</span>
-          <span>25</span>
-          <span>50</span>
-          <span>75</span>
-          <span>100</span>
-        </div>
-      </div>
-
-      <div className={styles.metrics}>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>
-            Tăng trưởng
-          </span>
-
-          <strong
-            className={
-              isPositiveGrowth
-                ? styles.positive
-                : styles.metricValue
-            }
-          >
-            {formatPercent(growth)}
-          </strong>
-
-          <span className={styles.metricHint}>
-            Tỷ lệ tăng trưởng được API cung cấp
-          </span>
-        </div>
-
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>
-            Vị trí đang tuyển
-          </span>
-
-          <strong className={styles.metricValue}>
-            {formatInteger(indicators.openingsCount)}
-          </strong>
-
-          <span className={styles.metricHint}>
-            Số lượng tin tuyển dụng mở
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.footer}>
-        <span>
-          {indicators.shortageLevel
-            ? `Mức độ thiếu hụt nhân lực: ${indicators.shortageLevel}`
-            : 'Mức độ thiếu hụt nhân lực: chưa cập nhật'}
-        </span>
-
-        {indicators.sourceName ? (
-          <span>
-            Nguồn: {indicators.sourceName}
-          </span>
-        ) : null}
-      </div>
-    </Card>
+          return (
+            <li key={point.period}>
+              <strong>{value === null ? '—' : numberFormat.format(value)}</strong>
+              <svg viewBox="0 0 24 100" preserveAspectRatio="none" aria-hidden="true">
+                <rect width="24" height="100" className={styles.track} />
+                {value !== null && (
+                  <rect y={100 - height} width="24" height={height} className={styles[metric]} />
+                )}
+              </svg>
+              <span>{point.period}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </figure>
   );
 }
 
-export default LmiChart;
+interface LmiChartProps {
+  indicators: OccupationMarketIndicators | null;
+  trend?: OccupationMarketPoint[];
+}
+
+export function LmiChart({ indicators, trend = [] }: LmiChartProps) {
+  const [view, setView] = useState<'chart' | 'table'>('chart');
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const regions = [...new Set(trend.flatMap(({ region }) => region ? [region] : []))];
+  const region = regions.includes(selectedRegion) ? selectedRegion : regions[0];
+  const snapshot = indicators && (indicators.demandScore !== null || indicators.openingsCount !== null)
+    ? [{
+        period: indicators.dataPeriod || 'Kỳ mới nhất',
+        region: null,
+        demandScore: indicators.demandScore,
+        openingsCount: indicators.openingsCount,
+      }]
+    : [];
+  const points = trend.length
+    ? trend.filter((point) => point.region === (region ?? null))
+      .sort((first, second) => first.period.localeCompare(second.period, 'vi', { numeric: true }))
+    : snapshot;
+  const availableMetrics = Object.keys(labels) as Metric[];
+  const metrics = availableMetrics
+    .filter((metric) => points.some((point) => point[metric] !== null));
+
+  const visibleMetrics = view === 'table' ? availableMetrics : metrics;
+  const hasMissingValues = points.some((point) => visibleMetrics.some((metric) => point[metric] === null));
+  const maxOpenings = (trend.length ? trend : snapshot)
+    .reduce((maximum, point) => Math.max(maximum, point.openingsCount ?? 0), 1);
+
+  return (
+    <Card as="section" className={styles.card}>
+      <div className={styles.heading}>
+        <h2>Xu hướng thị trường lao động</h2>
+        {regions.length > 0 && (
+          <label className={styles.region}>
+            <span>Khu vực</span>
+            <select value={region} onChange={(event) => setSelectedRegion(event.target.value)}>
+              {regions.map((name) => <option key={name}>{name}</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      {metrics.length > 0 ? (
+        <>
+          <div className={styles.segmented} role="group" aria-label="Cách hiển thị dữ liệu LMI">
+            <button type="button" aria-pressed={view === 'chart'} onClick={() => setView('chart')}>Biểu đồ</button>
+            <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>Bảng số liệu</button>
+          </div>
+          {view === 'chart' ? (
+            <div className={styles.charts}>
+              {metrics.map((metric) => (
+                <MarketBars
+                  key={metric}
+                  points={points}
+                  metric={metric}
+                  maximum={metric === 'demandScore' ? 100 : maxOpenings}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.tableArea}>
+              <table aria-label={region ? `Số liệu LMI — ${region}` : 'Số liệu LMI'}>
+                <thead>
+                  <tr>
+                    <th scope="col">Kỳ dữ liệu</th>
+                    <th scope="col">{labels.demandScore}</th>
+                    <th scope="col">{labels.openingsCount}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {points.map((point) => (
+                    <tr key={point.period}>
+                      <th scope="row">{point.period}</th>
+                      <td>{point.demandScore === null ? '—' : numberFormat.format(point.demandScore)}</td>
+                      <td>{point.openingsCount === null ? '—' : numberFormat.format(point.openingsCount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      ) : <p className={styles.note}>Chưa có dữ liệu điểm nhu cầu hoặc số lượng tuyển dụng.</p>}
+      {trend.length === 0 && snapshot.length > 0 && (
+        <p className={styles.note}>Dữ liệu hiện có gồm kỳ mới nhất.</p>
+      )}
+      {indicators && (
+        <dl className={styles.meta} aria-label="Chỉ số tổng quan kỳ mới nhất">
+          {indicators.dataPeriod && <div><dt>Kỳ mới nhất</dt><dd>{indicators.dataPeriod}</dd></div>}
+          {indicators.growthRatePct !== null && <div><dt>Tăng trưởng</dt><dd>{formatPercent(indicators.growthRatePct)}</dd></div>}
+          {indicators.shortageLevel && <div><dt>Thiếu hụt nhân lực</dt><dd>{indicators.shortageLevel}</dd></div>}
+          {indicators.sourceName && <div><dt>Nguồn</dt><dd>{indicators.sourceName}</dd></div>}
+        </dl>
+      )}
+      {metrics.length > 0 && hasMissingValues && (
+        <p className={styles.note}>Dấu — biểu thị giá trị chưa được cập nhật.</p>
+      )}
+    </Card>
+  );
+}

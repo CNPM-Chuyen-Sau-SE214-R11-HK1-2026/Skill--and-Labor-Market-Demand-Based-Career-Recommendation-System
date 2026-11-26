@@ -1,3 +1,5 @@
+import { apiClient } from '../../../api/client';
+import { env } from '../../../config/env';
 import type {
   OccupationDetail,
   OccupationSearchParams,
@@ -5,12 +7,8 @@ import type {
   PageResponse,
 } from '../types/occupation.types';
 
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:8080/api/v1'
-).replace(/\/$/, '');
-
 const USE_MOCK_DATA =
+  env.ENABLE_MOCK_API ||
   import.meta.env.VITE_USE_OCCUPATION_MOCKS === 'true';
 
 /**
@@ -19,64 +17,6 @@ const USE_MOCK_DATA =
  */
 export function isOccupationMockModeEnabled(): boolean {
   return USE_MOCK_DATA;
-}
-
-function getErrorMessage(
-  payload: unknown,
-  fallback: string
-): string {
-  if (
-    typeof payload === 'object' &&
-    payload !== null &&
-    'message' in payload
-  ) {
-    const message = (
-      payload as { message?: unknown }
-    ).message;
-
-    if (typeof message === 'string' && message.trim()) {
-      return message;
-    }
-  }
-
-  return fallback;
-}
-
-async function request<T>(
-  path: string,
-  signal?: AbortSignal
-): Promise<T> {
-  const token = localStorage.getItem('token');
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      ...(token
-        ? { Authorization: `Bearer ${token}` }
-        : {}),
-    },
-    signal,
-  });
-
-  if (!response.ok) {
-    let payload: unknown = null;
-
-    try {
-      payload = await response.json();
-    } catch {
-      // Response may be empty.
-    }
-
-    throw new Error(
-      getErrorMessage(
-        payload,
-        `Không thể tải dữ liệu (HTTP ${response.status}).`
-      )
-    );
-  }
-
-  return response.json() as Promise<T>;
 }
 
 export async function getOccupations(
@@ -90,24 +30,26 @@ export async function getOccupations(
     return mockGetOccupations(params);
   }
 
-  const search = new URLSearchParams();
+  const trimmedQuery = params.query?.trim();
+  const queryParams: Record<string, string | number> = {
+    page: params.page ?? 0,
+    size: params.size ?? 9,
+    sort: params.sort ?? 'title,asc',
+  };
 
-  if (params.query?.trim()) {
-    search.set('query', params.query.trim());
+  if (trimmedQuery) {
+    queryParams.query = trimmedQuery;
   }
 
   if (params.groupId !== undefined) {
-    search.set('groupId', String(params.groupId));
+    queryParams.groupId = params.groupId;
   }
 
-  search.set('page', String(params.page ?? 0));
-  search.set('size', String(params.size ?? 9));
-  search.set('sort', params.sort ?? 'title,asc');
-
-  return request<PageResponse<OccupationSummary>>(
-    `/occupations?${search.toString()}`,
-    signal
+  const response = await apiClient.get<PageResponse<OccupationSummary>>(
+    '/occupations',
+    { params: queryParams, signal }
   );
+  return response.data;
 }
 
 export async function getOccupationDetail(
@@ -121,10 +63,8 @@ export async function getOccupationDetail(
     return mockGetOccupationDetail(id);
   }
 
-  return request<OccupationDetail>(
-    `/occupations/${id}`,
-    signal
-  );
+  const response = await apiClient.get<OccupationDetail>(`/occupations/${id}`, { signal });
+  return response.data;
 }
 
 /**

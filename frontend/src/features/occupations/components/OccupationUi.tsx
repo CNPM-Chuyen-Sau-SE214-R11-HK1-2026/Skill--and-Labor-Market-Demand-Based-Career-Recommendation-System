@@ -4,7 +4,7 @@ export function Spinner({ label = 'Đang tải dữ liệu...' }: { label?: stri
   return <div className="state-panel" role="status"><span className="spinner" /><span>{label}</span></div>;
 }
 export function EmptyState({ title, description }: { title: string; description: string }) {
-  return <div className="state-panel"><span className="state-icon">⌕</span><strong>{title}</strong><span>{description}</span></div>;
+  return <div className="state-panel"><strong>{title}</strong><span>{description}</span></div>;
 }
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return <div className="state-panel state-panel--error" role="alert"><strong>Không thể tải dữ liệu</strong><span>{message}</span><button className="button button--secondary" onClick={onRetry}>Thử lại</button></div>;
@@ -18,4 +18,4 @@ export function PaginationControl({ page, totalPages, onChange }: { page: number
     <button className="page-button" disabled={page >= totalPages - 1} onClick={() => onChange(page + 1)} aria-label="Trang sau">→</button>
   </nav>;
 }
-export function PageShell({ children }: { children: ReactNode }) { return <main className="explorer-page"><div className="explorer-container">{children}</div></main>; }
+export function PageShell({ children }: { children: ReactNode }) { return <div className="occ-theme explorer-page"><div className="explorer-container">{children}</div></div>; }

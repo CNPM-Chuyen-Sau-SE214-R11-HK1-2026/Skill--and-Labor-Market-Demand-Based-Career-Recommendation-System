@@ -1,3 +1,4 @@
+import { buildMockOccupationDetail } from './occupationDetailMocks';
 import type { OccupationDetail, OccupationSearchParams, OccupationSummary, PageResponse } from '../types/occupation.types';
 
 const mockItems: OccupationSummary[] = [
@@ -20,16 +21,10 @@ export async function mockGetOccupations(params: OccupationSearchParams): Promis
 
 export async function mockGetOccupationDetail(id: number): Promise<OccupationDetail> {
   const item = mockItems.find((occupation) => occupation.id === id);
-  if (!item) throw new Error('Không tìm thấy nghề nghiệp.');
-  return {
-    ...item,
-    description: 'Mô tả minh họa dành riêng cho chế độ mock. Khi kết nối API thật, nội dung sẽ được lấy từ dữ liệu danh mục nghề nghiệp.',
-    salaryRange: { min: item.averageSalaryMin, max: item.averageSalaryMax, currency: 'VND' },
-    marketIndicators: { demandScore: item.demandScore, growthRatePct: item.growthRatePct, shortageLevel: 'HIGH', openingsCount: null, dataPeriod: 'Mock', sourceName: 'Mock data' },
-    skills: [
-      { skillId: 1, skillCode: 'SK-PROG-01', skillName: 'Programming', importanceType: 'ESSENTIAL', weight: 1 },
-      { skillId: 2, skillCode: 'SK-DB-01', skillName: 'Database', importanceType: 'ESSENTIAL', weight: 0.9 },
-      { skillId: 3, skillCode: 'SK-COM-01', skillName: 'Communication', importanceType: 'OPTIONAL', weight: 0.5 },
-    ],
-  };
+  if (!item) {
+    throw Object.assign(new Error('Không tìm thấy nghề nghiệp.'), {
+      response: { status: 404 },
+    });
+  }
+  return buildMockOccupationDetail(item);
 }
