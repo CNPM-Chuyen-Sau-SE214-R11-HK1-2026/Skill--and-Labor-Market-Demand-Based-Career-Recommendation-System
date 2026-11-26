@@ -183,14 +183,16 @@ class ProfilePostgresIT {
     void rejectsMissingCatalogSkill() throws Exception {
         Skill removed = skills.save(new Skill("missing-" + UUID.randomUUID(), "Removed skill", null, null));
         skills.deleteById(removed.getId());
-        send("POST", SKILLS, addBody(removed.getId()), candidateA, 404);
+        JsonNode error = send("POST", SKILLS, addBody(removed.getId()), candidateA, 404);
+        assertThat(error.path("error").asText()).isEqualTo("SKILL_NOT_FOUND");
         assertThat(userSkills.countByUserId(candidateA.getId())).isZero();
     }
 
     @Test
     void rejectsDuplicateForSameOwnerButAllowsOtherOwner() throws Exception {
         send("POST", SKILLS, addBody(skill.getId()), candidateA, 201);
-        send("POST", SKILLS, addBody(skill.getId()), candidateA, 409);
+        JsonNode error = send("POST", SKILLS, addBody(skill.getId()), candidateA, 409);
+        assertThat(error.path("error").asText()).isEqualTo("SKILL_ALREADY_EXISTS");
         send("POST", SKILLS, addBody(skill.getId()), candidateB, 201);
         assertThat(userSkills.countByUserId(candidateA.getId())).isEqualTo(1);
         assertThat(userSkills.countByUserId(candidateB.getId())).isEqualTo(1);
@@ -226,8 +228,10 @@ class ProfilePostgresIT {
     void candidateCannotUpdateOrDeleteAnotherCandidatesSkill() throws Exception {
         send("POST", SKILLS, addBody(skill.getId()), candidateA, 201);
         JsonNode before = send("GET", SKILLS, null, candidateA, 200);
-        send("PUT", skillPath(), LEVEL_UPDATE, candidateB, 404);
-        send("DELETE", skillPath(), null, candidateB, 404);
+        assertThat(send("PUT", skillPath(), LEVEL_UPDATE, candidateB, 404)
+                .path("error").asText()).isEqualTo("SKILL_NOT_FOUND");
+        assertThat(send("DELETE", skillPath(), null, candidateB, 404)
+                .path("error").asText()).isEqualTo("SKILL_NOT_FOUND");
         assertThat(send("GET", SKILLS, null, candidateA, 200)).isEqualTo(before);
     }
 
@@ -243,13 +247,38 @@ class ProfilePostgresIT {
     void rejectsInvalidInputsAndOwnerInjection() throws Exception {
         send("PUT", PROFILE, "{\"userId\":" + candidateB.getId() + "}", candidateA, 400);
         send("PUT", PROFILE, "{\"workMode\":\"UNKNOWN\",\"yearsOfExperience\":-1}", candidateA, 400);
-        send("POST", SKILLS, "{\"skillId\":" + skill.getId() + "}", candidateA, 400);
-        send("POST", SKILLS, "{\"skillId\":" + skill.getId() + ",\"proficiencyLevel\":\"UNKNOWN\"}", candidateA, 400);
-        send("POST", SKILLS, "{\"skillId\":" + skill.getId() + ".5,\"proficiencyLevel\":\"EXPERT\"}", candidateA, 400);
-        send("PUT", SKILLS + "/invalid", LEVEL_UPDATE, candidateA, 400);
         assertThat(profileCount(candidateA)).isZero();
         assertThat(profileCount(candidateB)).isZero();
+    }
+
+    @Test
+    void rejectsInvalidSkillRequestsWithBusinessCodeAndNoDatabaseChange() throws Exception {
+        String[] invalidBodies = {
+                "{\"skillId\":" + skill.getId() + "}",
+                "{\"skillId\":" + skill.getId() + ",\"proficiencyLevel\":\"MASTER\"}",
+                "{\"skillId\":" + skill.getId() + ",\"proficiencyLevel\":\"EXPERT\",\"yearsExperience\":-1}",
+                "{\"skillId\":" + skill.getId() + ",\"proficiencyLevel\":\"EXPERT\",\"yearsExperience\":1000}",
+                "{\"skillId\":" + skill.getId() + ",\"proficiencyLevel\":\"EXPERT\",\"yearsExperience\":1.55}",
+                "{\"skillId\":" + skill.getId() + ".5,\"proficiencyLevel\":\"EXPERT\"}"
+        };
+        for (String body : invalidBodies) {
+            JsonNode error = send("POST", SKILLS, body, candidateA, 400);
+            assertThat(error.path("error").asText()).isEqualTo("INVALID_SKILL_REQUEST");
+        }
+        assertThat(send("PUT", SKILLS + "/invalid", LEVEL_UPDATE, candidateA, 400)
+                .path("error").asText()).isEqualTo("INVALID_SKILL_REQUEST");
         assertThat(userSkills.countByUserId(candidateA.getId())).isZero();
+    }
+
+    @Test
+    void acceptsEquivalentSingleDecimalRepresentation() throws Exception {
+        String body = "{\"skillId\":" + skill.getId()
+                + ",\"proficiencyLevel\":\"INTERMEDIATE\",\"yearsExperience\":1.50}";
+
+        send("POST", SKILLS, body, candidateA, 201);
+
+        assertThat(userSkills.findByUserIdAndSkillId(candidateA.getId(), skill.getId()).orElseThrow()
+                .getYearsOfExperience()).isEqualByComparingTo("1.5");
     }
 
     @Test

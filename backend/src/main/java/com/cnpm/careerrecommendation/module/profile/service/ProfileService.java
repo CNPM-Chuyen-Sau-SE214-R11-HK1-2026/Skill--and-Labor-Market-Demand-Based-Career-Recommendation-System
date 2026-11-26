@@ -128,6 +128,9 @@ public class ProfileService {
     }
 
     private User lockOwner(Long userId) {
+        if (userId == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, null, "Thông tin xác thực không hợp lệ.");
+        }
         // Serialize writes for this owner even before a profile or skill row exists.
         User user = entityManager.find(User.class, userId, LockModeType.PESSIMISTIC_WRITE);
         if (user == null) {
@@ -189,7 +192,7 @@ public class ProfileService {
     private boolean isUserSkillDuplicate(Throwable error) {
         for (Throwable cause = error; cause != null; cause = cause.getCause()) {
             if (cause instanceof ConstraintViolationException violation
-                    && USER_SKILL_UNIQUE_CONSTRAINT.equals(violation.getConstraintName())) {
+                    && USER_SKILL_UNIQUE_CONSTRAINT.equalsIgnoreCase(violation.getConstraintName())) {
                 return true;
             }
         }

@@ -132,7 +132,7 @@
 * **Validation:**
   * `skillId`: Long, bắt buộc, > 0.
   * `proficiencyLevel`: Enum `BEGINNER | INTERMEDIATE | ADVANCED | EXPERT`, bắt buộc.
-  * `yearsExperience`: Số thập phân theo `NUMERIC(4,1)`, tùy chọn, không âm. Bỏ qua hoặc null dùng mặc định `0` của V1.
+  * `yearsExperience`: Tùy chọn, từ `0` đến `999.9`, tối đa một chữ số thập phân sau khi chuẩn hóa giá trị số. `1.50` được xem như `1.5`; bỏ qua hoặc `null` dùng mặc định `0` của V1.
 * **Phản hồi thành công (`201 Created`):**
   ```json
   {
@@ -144,7 +144,7 @@
   }
   ```
 * **Mã lỗi dự kiến:**
-  * `400 Bad Request`: Thiếu trường bắt buộc hoặc giá trị enum sai.
+  * `400 Bad Request` (`INVALID_SKILL_REQUEST`): `skillId`, `proficiencyLevel` hoặc `yearsExperience` không hợp lệ. JSON sai cấu trúc hoặc chứa trường không hỗ trợ dùng mã chung `Bad Request`.
   * `401 Unauthorized`: Chưa đăng nhập hoặc token hết hạn.
   * `404 Not Found` (`SKILL_NOT_FOUND`): Không tìm thấy kỹ năng có ID tương ứng trong bảng `skills`.
   * `409 Conflict` (`SKILL_ALREADY_EXISTS`): Kỹ năng này đã tồn tại trong hồ sơ của ứng viên.
@@ -163,8 +163,9 @@
     "yearsExperience": 2.5
   }
   ```
+* **Validation:** `proficiencyLevel` nếu có phải thuộc `BEGINNER | INTERMEDIATE | ADVANCED | EXPERT`; `yearsExperience` áp dụng cùng quy tắc `0..999.9` ở mục 2.4.
 * **Phản hồi thành công (`200 OK`):** Đối tượng kỹ năng theo cấu trúc ở mục 2.3. Chỉ cập nhật trường khác null được gửi trong body. Thiếu hoặc null giữ nguyên giá trị cũ. Thiếu liên kết thuộc ứng viên hiện tại trả 404.
-* **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`).
+* **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_SKILL_REQUEST`), `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`). Không tìm thấy và không thuộc quyền sở hữu đều trả cùng 404 để tránh lộ dữ liệu người khác.
 
 ---
 
@@ -174,4 +175,21 @@
 * **Quyền truy cập:** Yêu cầu vai trò `ROLE_CANDIDATE`.
 * **Tham số đường dẫn (Path Variable):** `skillId` (Long dương, `skills.id` trong danh mục).
 * **Phản hồi thành công (`204 No Content`)**
-* **Mã lỗi dự kiến:** `400 Bad Request` nếu ID sai định dạng hoặc không dương, `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`) nếu ứng viên không có kỹ năng này.
+* **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_SKILL_REQUEST`) nếu ID sai định dạng hoặc không dương, `401 Unauthorized`, `404 Not Found` (`SKILL_NOT_FOUND`) nếu ứng viên không có kỹ năng này hoặc bản ghi thuộc ứng viên khác.
+
+### 2.7. Cấu trúc lỗi kỹ năng
+
+Các lỗi nghiệp vụ dùng cấu trúc `ErrorResponse` chung:
+
+```json
+{
+  "timestamp": "2026-11-26T10:00:00Z",
+  "status": 400,
+  "error": "INVALID_SKILL_REQUEST",
+  "message": "yearsExperience phải từ 0 đến 999.9 và có tối đa một chữ số thập phân.",
+  "path": "/api/v1/profile/skills",
+  "errors": []
+}
+```
+
+`error` nhận `INVALID_SKILL_REQUEST` (400), `SKILL_NOT_FOUND` (404) hoặc `SKILL_ALREADY_EXISTS` (409) theo các trường hợp ở trên. Response không chứa SQL, constraint name hoặc stack trace.

@@ -12,6 +12,7 @@ import com.cnpm.careerrecommendation.module.profile.dto.UpdateSkillRequest;
 import com.cnpm.careerrecommendation.module.profile.service.ProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -78,13 +79,15 @@ public class ProfileController {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ResponseEntity<ErrorResponse> invalidPathId(HttpServletRequest request) {
-        return ResponseEntity.badRequest().body(ErrorResponse.of(HttpStatus.BAD_REQUEST,
-                "skillId phải là số nguyên dương.", request.getRequestURI()));
+        return ResponseEntity.badRequest().body(new ErrorResponse(Instant.now(), 400,
+                "INVALID_SKILL_REQUEST", "skillId phải là số nguyên dương.",
+                request.getRequestURI(), List.of()));
     }
 
     private Long requirePositiveSkillId(Long skillId) {
         if (skillId <= 0) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, null, "skillId phải là số nguyên dương.");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_SKILL_REQUEST",
+                    "skillId phải là số nguyên dương.");
         }
         return skillId;
     }
