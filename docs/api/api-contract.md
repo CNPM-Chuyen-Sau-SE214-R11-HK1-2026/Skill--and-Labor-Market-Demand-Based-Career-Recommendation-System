@@ -226,11 +226,11 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 
 #### `GET /api/v1/recommendations`
 * **Mã thao tác (Operation ID):** `getPersonalizedRecommendations`
-* **Mô tả:** Tạo danh sách gợi ý nghề nghiệp cá nhân hóa dựa trên hồ sơ kỹ năng của ứng viên và chỉ báo nhu cầu thị trường.
+* **Mô tả:** Tạo danh sách gợi ý nghề nghiệp cá nhân hóa dựa trên hồ sơ kỹ năng của ứng viên và chỉ báo nhu cầu thị trường, đồng thời lưu 01 bản ghi audit vào bảng `recommendation_logs` cho ứng viên hiện tại.
 * **Module chịu trách nhiệm:** `recommendation`
 * **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
 * **Tham số truy vấn (Query Params):**
-  * `limit`: Số lượng nghề gợi ý trả về (Integer, default: 10, max: 50)
+  * `limit`: Số lượng nghề gợi ý trả về (Integer, default: `10`, min: `1`, max: `50`)
 * **Phản hồi thành công (`200 OK`):**
   ```json
   [
@@ -245,18 +245,22 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
         "skillMatchPct": 85.0,
         "demandScore": 88.5,
         "preferenceMatchPct": 90.0,
-        "formula": "0.6*SkillMatch + 0.3*Demand + 0.1*Pref"
+        "formula": "0.6 * SkillMatch + 0.3 * DemandScore + 0.1 * PrefMatch"
       },
-      "marketGrowth": "Tăng trưởng cao (+12.4%)",
+      "marketGrowth": "+12.4%",
       "matchedSkillsCount": 6,
       "totalRequiredSkillsCount": 8,
-      "explanation": "Phù hợp với 6/8 kỹ năng yêu cầu (Java, SQL, Git...). Nghề có chỉ số nhu cầu tuyển dụng rất cao và mức lương kỳ vọng tương thích."
+      "explanation": "6 of 8 required skills matched; demand and preference fit: 88.5 and 90.0."
     }
   ]
   ```
+  *(Lưu ý: `groupName` có thể `null`; `marketGrowth` trả `"N/A"` khi nghề chưa có chỉ số tăng trưởng LMI.)*
 * **Mã lỗi dự kiến:**
-  * `400 Bad Request`: Ứng viên chưa khai báo bất kỳ kỹ năng nào trong hồ sơ.
+  * `400 Bad Request` (`NO_SKILLS_DECLARED`): Ứng viên chưa khai báo bất kỳ kỹ năng nào trong hồ sơ.
+  * `400 Bad Request` (`INVALID_LIMIT`): Tham số `limit` nằm ngoài khoảng `[1, 50]`.
+  * `400 Bad Request` (`INVALID_PARAMETER`): Tham số `limit` không phải số nguyên hợp lệ.
   * `401 Unauthorized`.
+  * `403 Forbidden`: Tài khoản không có vai trò `ROLE_CANDIDATE`.
 
 ---
 
@@ -276,36 +280,93 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
         "skillId": 12,
         "name": "Java",
         "userProficiency": "INTERMEDIATE",
-        "requiredImportance": "ESSENTIAL"
+        "requiredImportance": "HIGH",
+        "importanceWeight": 1.00
       },
       {
         "skillId": 15,
         "name": "SQL",
         "userProficiency": "ADVANCED",
-        "requiredImportance": "ESSENTIAL"
+        "requiredImportance": "HIGH",
+        "importanceWeight": 0.85
       }
     ],
     "missingEssentialSkills": [
       {
         "skillId": 33,
         "name": "Spring Boot / Web Frameworks",
-        "requiredImportance": "ESSENTIAL",
-        "priority": "HIGH",
-        "recommendationNote": "Kỹ năng cốt lõi bắt buộc, cần ưu tiên học tập trước"
+        "requiredImportance": "HIGH",
+        "importanceWeight": 0.90,
+        "priority": "CRITICAL",
+        "recommendationNote": "Develop this skill to improve your match for this occupation."
       }
     ],
     "missingOptionalSkills": [
       {
         "skillId": 45,
         "name": "Docker & Kubernetes",
-        "requiredImportance": "OPTIONAL",
+        "requiredImportance": "MEDIUM",
+        "importanceWeight": 0.50,
         "priority": "MEDIUM",
-        "recommendationNote": "Kỹ năng bổ trợ giúp tăng lợi thế cạnh tranh"
+        "recommendationNote": "Develop this skill to improve your match for this occupation."
       }
     ]
   }
   ```
-* **Mã lỗi dự kiến:** `401 Unauthorized`, `404 Not Found`.
+  *(Lưu ý: `requiredImportance` nhận `HIGH` (`>= 0.70`), `MEDIUM` (`>= 0.40`), `LOW` (`< 0.40`); `priority` nhận `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`.)*
+* **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_PARAMETER`), `401 Unauthorized`, `403 Forbidden`, `404 Not Found`.
+
+---
+
+#### `GET /api/v1/recommendations/history`
+* **Mã thao tác (Operation ID):** `getRecommendationHistory`
+* **Mô tả:** Truy xuất lịch sử các lần sinh gợi ý nghề nghiệp của chính ứng viên đang đăng nhập từ bảng `recommendation_logs`, phân trang chuẩn `PageResponse` và sắp xếp mới nhất trước (`recommendationDate DESC, id DESC`).
+* **Module chịu trách nhiệm:** `recommendation`
+* **Quyền truy cập:** Yêu cầu xác thực (`ROLE_CANDIDATE`)
+* **Nguyên tắc bảo mật quyền sở hữu (IDOR Guarantee):** Định danh `userId` được trích xuất duy nhất từ `@AuthenticationPrincipal AuthenticatedUser` trong `SecurityContextHolder`; mọi tham số `userId` truyền qua query string đều bị bỏ qua hoàn toàn.
+* **Tham số truy vấn (Query Params):**
+  * `page`: Số trang, 0-indexed (`Integer`, default: `0`, min: `0`)
+  * `size`: Số phần tử trên mỗi trang (`Integer`, default: `20`, min: `1`, max: `100`)
+* **Phản hồi thành công (`200 OK`):** Cấu trúc phân trang `PageResponse<RecommendationHistoryItemResponse>`:
+  ```json
+  {
+    "content": [
+      {
+        "id": 55,
+        "occupationId": 101,
+        "occupationCode": "SOC-15-1252",
+        "occupationTitle": "Software Developer / Kỹ sư phần mềm",
+        "groupName": "Công nghệ thông tin",
+        "matchScore": 86.40,
+        "skillGapCount": 2,
+        "recommendationDate": "2026-11-25T10:15:30Z",
+        "createdAt": "2026-11-25T10:15:30Z",
+        "inputSnapshot": {
+          "limit": 10,
+          "userSkillIds": [12, 15],
+          "topRecommendations": [
+            {
+              "rank": 1,
+              "occupationId": 101,
+              "finalScore": 86.4
+            }
+          ]
+        }
+      }
+    ],
+    "pageNumber": 0,
+    "pageSize": 20,
+    "totalElements": 1,
+    "totalPages": 1,
+    "last": true
+  }
+  ```
+  *(Lưu ý: `groupName` và `inputSnapshot` có thể `null` nếu nghề nghiệp không thuộc nhóm nào hoặc bản ghi log không có snapshot JSON hợp lệ.)*
+* **Mã lỗi dự kiến:**
+  * `400 Bad Request` (`INVALID_PAGINATION`): `page < 0`, `size < 1` hoặc `size > 100`.
+  * `400 Bad Request` (`INVALID_PARAMETER`): `page` hoặc `size` không phải số nguyên hợp lệ.
+  * `401 Unauthorized`: Thiếu hoặc sai JWT token.
+  * `403 Forbidden`: Tài khoản không có vai trò `ROLE_CANDIDATE`.
 
 ---
 
@@ -324,22 +385,25 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 
 #### `POST /api/v1/admin/lmi/import`
 * **Mã thao tác (Operation ID):** `importMarketData`
-* **Mô tả:** Nhập chỉ số thị trường lao động hàng loạt từ bộ dữ liệu thống kê đã kiểm duyệt.
+* **Mô tả:** Nhập chỉ số thị trường lao động hàng loạt (upsert theo khóa tự nhiên `(occupation_id, region, snapshot_date)`). Xem đặc tả đầy đủ tại [Hợp đồng Phân hệ LMI (docs/api/lmi.md)](./lmi.md).
 * **Module chịu trách nhiệm:** `admin` & `lmi`
 * **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
-* **Request Body:**
+* **Request Body (`LmiImportRequest`, bắt buộc bọc trong `{ "items": [...] }`):**
   ```json
-  [
-    {
-      "occupationCode": "SOC-15-1252",
-      "demandScore": 88.5,
-      "growthRatePct": 12.4,
-      "shortageLevel": "HIGH",
-      "openingsCount": 1250,
-      "dataPeriod": "2025-2026",
-      "sourceName": "Cục Thống kê & WEF 2025"
-    }
-  ]
+  {
+    "items": [
+      {
+        "occupationId": 1,
+        "occupationCode": "SOC-15-1252",
+        "region": "HCMC",
+        "demandScore": 88.50,
+        "growthRatePct": 12.40,
+        "openJobPostingsCount": 1250,
+        "competitiveIndex": 2.80,
+        "snapshotDate": "2026-11-01"
+      }
+    ]
+  }
   ```
 * **Phản hồi thành công (`200 OK`):**
   ```json
@@ -347,7 +411,7 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
     "totalRecordsProcessed": 1,
     "recordsInserted": 0,
     "recordsUpdated": 1,
-    "timestamp": "2026-10-22T15:45:00Z"
+    "timestamp": "2026-11-19T12:00:00Z"
   }
   ```
-* **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`.
+* **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_LMI_REQUEST`, `INVALID_OCCUPATION`), `401 Unauthorized`, `403 Forbidden`, `409 Conflict` (`LMI_CONCURRENT_CONFLICT`).

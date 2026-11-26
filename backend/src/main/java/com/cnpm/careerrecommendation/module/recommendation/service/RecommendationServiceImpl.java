@@ -1,5 +1,6 @@
 package com.cnpm.careerrecommendation.module.recommendation.service;
 
+import com.cnpm.careerrecommendation.common.dto.PageResponse;
 import com.cnpm.careerrecommendation.common.exception.ApiException;
 import com.cnpm.careerrecommendation.common.exception.ResourceNotFoundException;
 import com.cnpm.careerrecommendation.common.repository.UserRepository;
@@ -7,18 +8,30 @@ import com.cnpm.careerrecommendation.entity.*;
 import com.cnpm.careerrecommendation.module.recommendation.dto.*;
 import com.cnpm.careerrecommendation.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
+  private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
   private static final String FORMULA = "0.6 * SkillMatch + 0.3 * DemandScore + 0.1 * PrefMatch";
+  private static final int MAX_HISTORY_PAGE_SIZE = 100;
+  private static final Sort HISTORY_SORT =
+      Sort.by(Sort.Order.desc("recommendationDate"), Sort.Order.desc("id"));
   private final RecommendationEngine engine;
   private final UserSkillRepository userSkills;
   private final CandidateProfileRepository profiles;
@@ -224,6 +237,64 @@ public class RecommendationServiceImpl implements RecommendationService {
     double pct = engine.skillMatch(mine, required);
     return new SkillGapResponse(
         o.getId(), o.getTitle(), RecommendationEngine.round1(pct), matched, essential, optional);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PageResponse<RecommendationHistoryItemResponse> getRecommendationHistory(
+      Long userId, int page, int size) {
+    if (userId == null) {
+      throw new ApiException(
+          HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authenticated candidate is required.");
+    }
+    if (page < 0 || size < 1 || size > MAX_HISTORY_PAGE_SIZE) {
+      throw new ApiException(
+          HttpStatus.BAD_REQUEST,
+          "INVALID_PAGINATION",
+          "Page must be >= 0 and size must be between 1 and " + MAX_HISTORY_PAGE_SIZE + ".");
+    }
+    Page<RecommendationLog> historyPage =
+        logs.findHistoryByUserId(userId, PageRequest.of(page, size, HISTORY_SORT));
+    return PageResponse.from(historyPage.map(this::toHistoryItem));
+  }
+
+  private RecommendationHistoryItemResponse toHistoryItem(RecommendationLog log) {
+    Occupation occupation = log.getOccupation();
+    Long occupationId = occupation == null ? null : occupation.getId();
+    String occupationCode = occupation == null ? null : occupation.getCode();
+    String occupationTitle = occupation == null ? null : occupation.getTitle();
+    String groupName =
+        occupation == null || occupation.getGroup() == null
+            ? null
+            : occupation.getGroup().getName();
+    int skillGapCount = log.getSkillGapCount() == null ? 0 : log.getSkillGapCount();
+    return new RecommendationHistoryItemResponse(
+        log.getId(),
+        occupationId,
+        occupationCode,
+        occupationTitle,
+        groupName,
+        log.getMatchScore(),
+        skillGapCount,
+        toInstant(log.getRecommendationDate()),
+        toInstant(log.getCreatedAt()),
+        parseSnapshot(log.getInputSnapshotJson()));
+  }
+
+  private static Instant toInstant(OffsetDateTime dateTime) {
+    return dateTime == null ? null : dateTime.toInstant();
+  }
+
+  private JsonNode parseSnapshot(String rawJson) {
+    if (rawJson == null || rawJson.isBlank()) {
+      return null;
+    }
+    try {
+      return mapper.readTree(rawJson);
+    } catch (JsonProcessingException ex) {
+      LOG.warn("Could not parse stored recommendation snapshot JSON");
+      return null;
+    }
   }
 
   private void validateLimit(int limit) {
