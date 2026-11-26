@@ -24,7 +24,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("""
             SELECT u FROM User u
-            WHERE (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%')))
+            WHERE (CAST(:email AS String) IS NULL
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:email AS String), '%')))
               AND (:role IS NULL OR u.role = :role)
               AND (:active IS NULL OR u.active = :active)
             """)

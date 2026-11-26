@@ -316,9 +316,10 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Mô tả:** Quản lý danh sách tài khoản người dùng trong hệ thống.
 * **Module chịu trách nhiệm:** `admin`
 * **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
-* **Tham số:** `page` (mặc định `0`), `size` (mặc định `20`, tối đa `100`), `email`, `role`, `active`; `status=ACTIVE|INACTIVE` được hỗ trợ tương đương `active` để tương thích hợp đồng ban đầu.
+* **Tham số:** `page` (mặc định `0`), `size` (mặc định `20`, tối đa `100`), `email`, `role`, `active`; `status=ACTIVE|INACTIVE` được hỗ trợ tương đương `active` để tương thích hợp đồng ban đầu. Email rỗng hoặc chỉ có khoảng trắng được xem như không có filter.
+* **Phân trang:** Offset tối đa là `Integer.MAX_VALUE`. Kết quả được sắp xếp theo `createdAt DESC`, sau đó `id DESC` để ổn định thứ tự khi timestamp trùng nhau.
 * **Phản hồi thành công (`200 OK`):** `PageResponse<AdminUserResponse>` với các trường người dùng `id`, `email`, `fullName`, `role`, `active`, `createdAt`, `updatedAt`. Không trả `passwordHash`.
-* **Mã lỗi dự kiến:** `400 INVALID_PAGINATION`, `400 INVALID_ROLE`, `400 INVALID_USER_STATUS`, `401 Unauthorized`, `403 Forbidden`.
+* **Mã lỗi dự kiến:** `400 INVALID_PAGINATION`, `400 INVALID_ROLE`, `400 INVALID_USER_STATUS`, `400 INVALID_ADMIN_REQUEST` khi query/path parameter sai kiểu, `401 Unauthorized`, `403 Forbidden`.
 
 ---
 
@@ -328,7 +329,7 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Request Body:** `{ "active": true|false }`.
 * **Phản hồi thành công (`200 OK`):** `AdminUserResponse` sau cập nhật.
 * **Quy tắc:** Thao tác idempotent; quản trị viên không được tự vô hiệu hóa tài khoản của chính mình.
-* **Mã lỗi dự kiến:** `400 SELF_DEACTIVATION_NOT_ALLOWED`, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
+* **Mã lỗi dự kiến:** `400 SELF_DEACTIVATION_NOT_ALLOWED`, `400 INVALID_ADMIN_REQUEST` khi ID sai kiểu, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
 
 ---
 
@@ -337,7 +338,8 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Quyền truy cập:** Yêu cầu `ROLE_ADMIN`.
 * **Request Body:** `{ "role": "ROLE_CANDIDATE"|"ROLE_ADMIN" }`.
 * **Phản hồi thành công (`200 OK`):** `AdminUserResponse` sau cập nhật.
-* **Mã lỗi dự kiến:** `400 INVALID_ROLE`, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
+* **Quy tắc:** Thao tác idempotent; quản trị viên không được tự đổi vai trò của chính mình xuống `ROLE_CANDIDATE`. Việc đổi vai trò của tài khoản khác giữ nguyên hành vi hiện có.
+* **Mã lỗi dự kiến:** `400 INVALID_ROLE`, `400 SELF_ROLE_DOWNGRADE_NOT_ALLOWED`, `400 INVALID_ADMIN_REQUEST` khi ID sai kiểu, `404 USER_NOT_FOUND`, `401 Unauthorized`, `403 Forbidden`.
 
 ---
 

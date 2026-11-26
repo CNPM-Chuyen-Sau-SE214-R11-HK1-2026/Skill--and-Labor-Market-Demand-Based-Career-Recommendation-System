@@ -13,7 +13,7 @@ public interface AdminService {
 
     AdminUserResponse updateUserStatus(Long userId, UpdateUserStatusRequest request, Long currentAdminId);
 
-    AdminUserResponse updateUserRole(Long userId, UpdateUserRoleRequest request);
+    AdminUserResponse updateUserRole(Long userId, UpdateUserRoleRequest request, Long currentAdminId);
 
     AdminStatsResponse getStats();
 }

@@ -17,12 +17,14 @@ import java.time.Instant;
 import java.util.List;
 import io.jsonwebtoken.MalformedJwtException;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -99,6 +102,12 @@ class AdminUserControllerTest {
                 .andExpect(jsonPath("$.content[0].active").value(true))
                 .andExpect(jsonPath("$.content[0].passwordHash").doesNotExist())
                 .andExpect(jsonPath("$.pageSize").value(10));
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(adminService).listUsers(eq("candidate"), eq("ROLE_CANDIDATE"), eq(true), pageable.capture());
+        assertThat(pageable.getValue().getSort().toList())
+                .extracting(order -> order.getProperty() + ":" + order.getDirection())
+                .containsExactly("createdAt:DESC", "id:DESC");
     }
 
     @Test
@@ -108,6 +117,55 @@ class AdminUserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("INVALID_PAGINATION"));
         verify(adminService, never()).listUsers(any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void invalidQueryAndPathTypesReturn400WithoutCallingService() throws Exception {
+        for (String parameter : List.of("page", "size", "active")) {
+            mockMvc.perform(get("/api/v1/admin/users").param(parameter, "invalid"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("INVALID_ADMIN_REQUEST"));
+        }
+        mockMvc.perform(patch("/api/v1/admin/users/invalid/status")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("INVALID_ADMIN_REQUEST"));
+        mockMvc.perform(patch("/api/v1/admin/users/invalid/role")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"ROLE_ADMIN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("INVALID_ADMIN_REQUEST"));
+
+        verify(adminService, never()).listUsers(any(), any(), any(), any());
+        verify(adminService, never()).updateUserStatus(any(), any(), any());
+        verify(adminService, never()).updateUserRole(any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void paginationBoundariesRejectOverflowBeforeService() throws Exception {
+        for (String query : List.of(
+                "?page=-1", "?size=-1", "?size=0", "?size=101",
+                "?page=21474837&size=100", "?page=2147483647&size=100",
+                "?page=2147483648")) {
+            mockMvc.perform(get("/api/v1/admin/users" + query))
+                    .andExpect(status().isBadRequest());
+        }
+        verify(adminService, never()).listUsers(any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void largestSupportedOffsetAndMaximumSizeReachService() throws Exception {
+        when(adminService.listUsers(any(), any(), any(), any()))
+                .thenReturn(PageResponse.of(List.of(), 21_474_836, 100, 0, 0));
+
+        mockMvc.perform(get("/api/v1/admin/users?page=21474836&size=100"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(adminService).listUsers(any(), any(), any(), pageable.capture());
+        assertThat(pageable.getValue().getOffset()).isEqualTo(2_147_483_600L);
     }
 
     @Test
@@ -139,16 +197,31 @@ class AdminUserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     void adminCanUpdateRole() throws Exception {
-        when(adminService.updateUserRole(eq(2L), any())).thenReturn(response(2L, Role.ROLE_ADMIN, true));
+        when(adminService.updateUserRole(eq(2L), any(), eq(1L)))
+                .thenReturn(response(2L, Role.ROLE_ADMIN, true));
 
         mockMvc.perform(patch("/api/v1/admin/users/2/role")
+                        .with(authentication(adminAuthentication()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"ROLE_ADMIN\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.role").value("ROLE_ADMIN"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    void selfRoleDowngradeReturns400() throws Exception {
+        when(adminService.updateUserRole(eq(1L), any(), eq(1L)))
+                .thenThrow(new ApiException(HttpStatus.BAD_REQUEST,
+                        "SELF_ROLE_DOWNGRADE_NOT_ALLOWED", "Admin cannot downgrade their own role"));
+
+        mockMvc.perform(patch("/api/v1/admin/users/1/role")
+                        .with(authentication(adminAuthentication()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"ROLE_CANDIDATE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("SELF_ROLE_DOWNGRADE_NOT_ALLOWED"));
     }
 
     @Test
@@ -159,7 +232,7 @@ class AdminUserControllerTest {
                         .content("{\"role\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("role"));
-        verify(adminService, never()).updateUserRole(any(), any());
+        verify(adminService, never()).updateUserRole(any(), any(), any());
     }
 
     @Test

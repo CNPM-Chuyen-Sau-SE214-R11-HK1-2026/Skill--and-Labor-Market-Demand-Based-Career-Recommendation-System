@@ -164,7 +164,7 @@ class AdminServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(target));
         when(userRepository.save(target)).thenReturn(target);
 
-        AdminUserResponse result = service.updateUserRole(2L, new UpdateUserRoleRequest("ROLE_ADMIN"));
+        AdminUserResponse result = service.updateUserRole(2L, new UpdateUserRoleRequest("ROLE_ADMIN"), 1L);
 
         assertEquals(Role.ROLE_ADMIN, result.role());
         verify(userRepository).save(target);
@@ -174,7 +174,7 @@ class AdminServiceTest {
     void updateRoleReturnsNotFound() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
         ApiException error = assertThrows(ApiException.class,
-                () -> service.updateUserRole(99L, new UpdateUserRoleRequest("ROLE_ADMIN")));
+                () -> service.updateUserRole(99L, new UpdateUserRoleRequest("ROLE_ADMIN"), 1L));
         assertEquals(HttpStatus.NOT_FOUND, error.getStatus());
         assertEquals("USER_NOT_FOUND", error.getErrorCode());
     }
@@ -182,7 +182,7 @@ class AdminServiceTest {
     @Test
     void updateRoleRejectsBlankValueBeforeDatabaseAccess() {
         ApiException error = assertThrows(ApiException.class,
-                () -> service.updateUserRole(2L, new UpdateUserRoleRequest(" ")));
+                () -> service.updateUserRole(2L, new UpdateUserRoleRequest(" "), 1L));
         assertEquals("INVALID_ROLE", error.getErrorCode());
         verify(userRepository, never()).findById(any());
     }
@@ -190,7 +190,7 @@ class AdminServiceTest {
     @Test
     void updateRoleRejectsInvalidValueBeforeDatabaseAccess() {
         ApiException error = assertThrows(ApiException.class,
-                () -> service.updateUserRole(2L, new UpdateUserRoleRequest("MASTER")));
+                () -> service.updateUserRole(2L, new UpdateUserRoleRequest("MASTER"), 1L));
         assertEquals("INVALID_ROLE", error.getErrorCode());
         verify(userRepository, never()).findById(any());
         verify(userRepository, never()).save(any());
@@ -201,10 +201,49 @@ class AdminServiceTest {
         User target = user(2L, "admin@example.com", Role.ROLE_ADMIN, true);
         when(userRepository.findById(2L)).thenReturn(Optional.of(target));
 
-        AdminUserResponse result = service.updateUserRole(2L, new UpdateUserRoleRequest("role_admin"));
+        AdminUserResponse result = service.updateUserRole(2L, new UpdateUserRoleRequest("role_admin"), 2L);
 
         assertEquals(Role.ROLE_ADMIN, result.role());
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRoleRejectsSelfDowngradeWithoutSave() {
+        User admin = user(1L, "admin@example.com", Role.ROLE_ADMIN, true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+
+        ApiException error = assertThrows(ApiException.class,
+                () -> service.updateUserRole(1L, new UpdateUserRoleRequest("ROLE_CANDIDATE"), 1L));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatus());
+        assertEquals("SELF_ROLE_DOWNGRADE_NOT_ALLOWED", error.getErrorCode());
+        assertEquals(Role.ROLE_ADMIN, admin.getRole());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRoleAllowsDowngradingAnotherAdmin() {
+        User admin = user(2L, "other-admin@example.com", Role.ROLE_ADMIN, true);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(admin));
+        when(userRepository.save(admin)).thenReturn(admin);
+
+        AdminUserResponse result = service.updateUserRole(
+                2L, new UpdateUserRoleRequest("ROLE_CANDIDATE"), 1L);
+
+        assertEquals(Role.ROLE_CANDIDATE, result.role());
+        verify(userRepository).save(admin);
+    }
+
+    @Test
+    void listUsersRejectsOffsetOverflowBeforeQuery() {
+        PageRequest pageable = PageRequest.of(21_474_837, 100);
+
+        ApiException error = assertThrows(ApiException.class,
+                () -> service.listUsers(null, null, null, pageable));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatus());
+        assertEquals("INVALID_PAGINATION", error.getErrorCode());
+        verify(userRepository, never()).searchAdminUsers(any(), any(), any(), any());
     }
 
     @Test

@@ -73,9 +73,13 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public AdminUserResponse updateUserRole(Long userId, UpdateUserRoleRequest request) {
+    public AdminUserResponse updateUserRole(Long userId, UpdateUserRoleRequest request, Long currentAdminId) {
         Role role = parseRole(request == null ? null : request.role(), false);
         User user = findUser(userId);
+        if (userId.equals(currentAdminId) && role == Role.ROLE_CANDIDATE) {
+            throw badRequest("SELF_ROLE_DOWNGRADE_NOT_ALLOWED",
+                    "Admin cannot downgrade their own role");
+        }
         if (user.getRole() != role) {
             user.setRole(role);
             user = userRepository.save(user);
@@ -120,7 +124,8 @@ public class AdminServiceImpl implements AdminService {
 
     private void validatePageable(Pageable pageable) {
         if (pageable == null || pageable.getPageNumber() < 0
-                || pageable.getPageSize() < 1 || pageable.getPageSize() > 100) {
+                || pageable.getPageSize() < 1 || pageable.getPageSize() > 100
+                || pageable.getOffset() > Integer.MAX_VALUE) {
             throw badRequest("INVALID_PAGINATION", "page must be non-negative and size must be between 1 and 100");
         }
     }
