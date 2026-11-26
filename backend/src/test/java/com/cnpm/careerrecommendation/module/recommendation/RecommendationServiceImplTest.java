@@ -192,8 +192,9 @@ class RecommendationServiceImplTest {
     Pageable captured = pageableCaptor.getValue();
     assertEquals(0, captured.getPageNumber());
     assertEquals(20, captured.getPageSize());
-    assertEquals(Sort.Direction.DESC, captured.getSort().getOrderFor("recommendationDate").getDirection());
-    assertEquals(Sort.Direction.DESC, captured.getSort().getOrderFor("id").getDirection());
+    assertEquals(
+        List.of(Sort.Order.desc("recommendationDate"), Sort.Order.desc("id")),
+        captured.getSort().toList());
 
     assertEquals(1, page.content().size());
     assertEquals(0, page.pageNumber());
@@ -266,9 +267,9 @@ class RecommendationServiceImplTest {
   }
 
   @Test
-  @DisplayName("History rejects invalid page and size bounds before querying repository")
+  @DisplayName("History rejects invalid page, size bounds, and offset overflow before querying repository")
   void historyRejectsInvalidPagination() {
-    for (int[] pair : new int[][] {{-1, 20}, {0, 0}, {0, 101}}) {
+    for (int[] pair : new int[][] {{-1, 20}, {0, 0}, {0, 101}, {107374183, 20}}) {
       ApiException ex =
           assertThrows(
               ApiException.class,

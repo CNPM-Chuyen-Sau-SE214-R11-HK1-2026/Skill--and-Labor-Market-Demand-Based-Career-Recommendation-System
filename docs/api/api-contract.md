@@ -361,7 +361,7 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
     "last": true
   }
   ```
-  *(Lưu ý: `groupName` và `inputSnapshot` có thể `null` nếu nghề nghiệp không thuộc nhóm nào hoặc bản ghi log không có snapshot JSON hợp lệ.)*
+  *(Lưu ý: `groupName` và `inputSnapshot` có thể `null` nếu nghề nghiệp không thuộc nhóm nào hoặc bản ghi log không có snapshot JSON hợp lệ. Các trường thời gian ISO-8601 UTC như `recommendationDate` và `createdAt` có thể bao gồm phần thập phân giây tùy chọn theo định dạng `YYYY-MM-DDTHH:mm:ss[.SSSSSS]Z`.)*
 * **Mã lỗi dự kiến:**
   * `400 Bad Request` (`INVALID_PAGINATION`): `page < 0`, `size < 1` hoặc `size > 100`.
   * `400 Bad Request` (`INVALID_PARAMETER`): `page` hoặc `size` không phải số nguyên hợp lệ.

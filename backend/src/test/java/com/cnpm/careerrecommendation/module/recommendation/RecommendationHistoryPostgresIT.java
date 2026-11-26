@@ -24,6 +24,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -154,12 +155,54 @@ class RecommendationHistoryPostgresIT {
   void enforcesCandidateRbacForHistoryEndpoint() throws Exception {
     HttpResponse<String> anonymous = get(HISTORY_PATH, null);
     assertThat(anonymous.statusCode()).isEqualTo(401);
+    JsonNode anonymousBody = mapper.readTree(anonymous.body());
+    assertThat(anonymousBody.path("status").asInt()).isEqualTo(401);
+    assertThat(anonymousBody.path("error").asText()).isEqualTo("Unauthorized");
+    assertThat(anonymousBody.path("path").asText()).isEqualTo(HISTORY_PATH);
 
     HttpResponse<String> invalidJwt = getWithRawToken(HISTORY_PATH, "not-a-valid-jwt");
     assertThat(invalidJwt.statusCode()).isEqualTo(401);
+    JsonNode invalidBody = mapper.readTree(invalidJwt.body());
+    assertThat(invalidBody.path("status").asInt()).isEqualTo(401);
+    assertThat(invalidBody.path("error").asText()).isEqualTo("Unauthorized");
+    assertThat(invalidBody.path("path").asText()).isEqualTo(HISTORY_PATH);
 
     HttpResponse<String> adminResp = get(HISTORY_PATH, adminUser);
     assertThat(adminResp.statusCode()).isEqualTo(403);
+    JsonNode adminBody = mapper.readTree(adminResp.body());
+    assertThat(adminBody.path("status").asInt()).isEqualTo(403);
+    assertThat(adminBody.path("error").asText()).isEqualTo("Forbidden");
+    assertThat(adminBody.path("path").asText()).isEqualTo(HISTORY_PATH);
+  }
+
+  @Test
+  void returnsEmptyHistoryPageAndRejectsInvalidPaginationAndOverflow() throws Exception {
+    HttpResponse<String> emptyResp = get(HISTORY_PATH + "?page=0&size=20", candidateA);
+    assertThat(emptyResp.statusCode()).isEqualTo(200);
+    JsonNode emptyPage = mapper.readTree(emptyResp.body());
+    assertThat(emptyPage.path("content").isArray()).isTrue();
+    assertThat(emptyPage.path("content")).isEmpty();
+    assertThat(emptyPage.path("pageNumber").asInt()).isZero();
+    assertThat(emptyPage.path("pageSize").asInt()).isEqualTo(20);
+    assertThat(emptyPage.path("totalElements").asLong()).isZero();
+    assertThat(emptyPage.path("totalPages").asInt()).isZero();
+    assertThat(emptyPage.path("last").asBoolean()).isTrue();
+
+    HttpResponse<String> offsetOverflowResp =
+        get(HISTORY_PATH + "?page=107374183&size=20", candidateA);
+    assertThat(offsetOverflowResp.statusCode()).isEqualTo(400);
+    JsonNode offsetOverflowBody = mapper.readTree(offsetOverflowResp.body());
+    assertThat(offsetOverflowBody.path("status").asInt()).isEqualTo(400);
+    assertThat(offsetOverflowBody.path("error").asText()).isEqualTo("INVALID_PAGINATION");
+    assertThat(offsetOverflowBody.path("path").asText()).isEqualTo(HISTORY_PATH);
+
+    HttpResponse<String> intOverflowResp =
+        get(HISTORY_PATH + "?size=99999999999", candidateA);
+    assertThat(intOverflowResp.statusCode()).isEqualTo(400);
+    JsonNode intOverflowBody = mapper.readTree(intOverflowResp.body());
+    assertThat(intOverflowBody.path("status").asInt()).isEqualTo(400);
+    assertThat(intOverflowBody.path("error").asText()).isEqualTo("INVALID_PARAMETER");
+    assertThat(intOverflowBody.path("path").asText()).isEqualTo(HISTORY_PATH);
   }
 
   @Test
@@ -213,22 +256,39 @@ class RecommendationHistoryPostgresIT {
     JsonNode firstItem = pageZero.path("content").get(0);
     assertThat(firstItem.path("id").asLong()).isEqualTo(logTieSecond.getId());
     assertThat(firstItem.path("occupationId").asLong()).isEqualTo(occ3.getId());
+    assertThat(firstItem.path("occupationCode").asText()).isEqualTo(occ3.getCode());
     assertThat(firstItem.path("occupationTitle").asText()).isEqualTo("Cloud Architect");
     assertThat(firstItem.path("groupName").isNull()).isTrue();
     assertThat(firstItem.path("matchScore").decimalValue()).isEqualByComparingTo("91.25");
     assertThat(firstItem.path("skillGapCount").asInt()).isEqualTo(1);
+    assertThat(firstItem.path("recommendationDate").isTextual()).isTrue();
+    assertThat(firstItem.path("createdAt").isTextual()).isTrue();
+    assertThat(Instant.parse(firstItem.path("recommendationDate").asText()))
+        .isEqualTo(tieTime.toInstant());
+    assertThat(Instant.parse(firstItem.path("createdAt").asText()))
+        .isEqualTo(tieTime.toInstant());
     assertThat(firstItem.path("inputSnapshot").path("limit").asInt()).isEqualTo(5);
 
     JsonNode secondItem = pageZero.path("content").get(1);
     assertThat(secondItem.path("id").asLong()).isEqualTo(logTieFirst.getId());
+    assertThat(secondItem.path("occupationCode").asText()).isEqualTo(occ2.getCode());
     assertThat(secondItem.path("groupName").asText()).isEqualTo(testGroup.getName());
+    assertThat(secondItem.path("recommendationDate").isTextual()).isTrue();
+    assertThat(secondItem.path("createdAt").isTextual()).isTrue();
+    assertThat(Instant.parse(secondItem.path("recommendationDate").asText()))
+        .isEqualTo(tieTime.toInstant());
 
     HttpResponse<String> pageOneResp = get(HISTORY_PATH + "?page=1&size=2", candidateA);
     assertThat(pageOneResp.statusCode()).isEqualTo(200);
     JsonNode pageOne = mapper.readTree(pageOneResp.body());
     assertThat(pageOne.path("last").asBoolean()).isTrue();
     assertThat(pageOne.path("content")).hasSize(1);
-    assertThat(pageOne.path("content").get(0).path("id").asLong()).isEqualTo(logOlder.getId());
+    JsonNode olderItem = pageOne.path("content").get(0);
+    assertThat(olderItem.path("id").asLong()).isEqualTo(logOlder.getId());
+    assertThat(olderItem.path("occupationCode").asText()).isEqualTo(occ1.getCode());
+    assertThat(olderItem.path("recommendationDate").isTextual()).isTrue();
+    assertThat(Instant.parse(olderItem.path("recommendationDate").asText()))
+        .isEqualTo(olderTime.toInstant());
 
     // IDOR check: passing candidateA's userId as a query parameter must still only return candidateB's logs.
     HttpResponse<String> idorAttemptResp =
@@ -252,6 +312,7 @@ class RecommendationHistoryPostgresIT {
     assertThat(recs.isArray()).isTrue();
     assertThat(recs.size()).isGreaterThan(0);
     long topOccupationId = recs.get(0).path("occupationId").asLong();
+    String topOccupationCode = recs.get(0).path("occupationCode").asText();
 
     HttpResponse<String> historyResp = get(HISTORY_PATH + "?page=0&size=10", candidateA);
     assertThat(historyResp.statusCode()).isEqualTo(200);
@@ -259,6 +320,11 @@ class RecommendationHistoryPostgresIT {
     assertThat(history.path("totalElements").asLong()).isEqualTo(1L);
     JsonNode latest = history.path("content").get(0);
     assertThat(latest.path("occupationId").asLong()).isEqualTo(topOccupationId);
+    assertThat(latest.path("occupationCode").asText()).isEqualTo(topOccupationCode);
+    assertThat(latest.path("recommendationDate").isTextual()).isTrue();
+    assertThat(latest.path("createdAt").isTextual()).isTrue();
+    assertThat(Instant.parse(latest.path("recommendationDate").asText())).isNotNull();
+    assertThat(Instant.parse(latest.path("createdAt").asText())).isNotNull();
     assertThat(latest.path("inputSnapshot").path("limit").asInt()).isEqualTo(5);
     assertThat(latest.path("inputSnapshot").path("topRecommendations").get(0).path("occupationId").asLong())
         .isEqualTo(topOccupationId);

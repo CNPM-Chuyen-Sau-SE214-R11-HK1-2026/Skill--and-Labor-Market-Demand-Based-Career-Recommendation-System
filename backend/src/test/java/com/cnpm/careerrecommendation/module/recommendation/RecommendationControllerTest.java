@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(RecommendationController.class)
@@ -271,11 +272,45 @@ class RecommendationControllerTest {
                 .param("page", "abc")
                 .with(candidate()))
         .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.timestamp").isString())
         .andExpect(jsonPath("$.status").value(400))
-        .andExpect(jsonPath("$.error").value("INVALID_PARAMETER"));
+        .andExpect(jsonPath("$.error").value("INVALID_PARAMETER"))
+        .andExpect(jsonPath("$.message").value("Invalid value for parameter 'page'."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("size", "99999999999")
+                .with(candidate()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.timestamp").isString())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("INVALID_PARAMETER"))
+        .andExpect(jsonPath("$.message").value("Invalid value for parameter 'size'."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
 
     verify(service).getRecommendationHistory(7L, -1, 20);
     verifyNoMoreInteractions(service);
+  }
+
+  @Test
+  @WithMockUser(roles = "CANDIDATE")
+  void historyRejectsNonAuthenticatedUserPrincipal() throws Exception {
+    mvc.perform(get("/api/v1/recommendations/history"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.timestamp").isString())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+        .andExpect(jsonPath("$.message").value("Authenticated candidate is required."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    verifyNoInteractions(service);
   }
 
   private org.springframework.test.web.servlet.request.RequestPostProcessor candidate() {

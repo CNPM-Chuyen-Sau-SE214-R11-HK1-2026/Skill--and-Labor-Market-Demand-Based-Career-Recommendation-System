@@ -247,11 +247,16 @@ public class RecommendationServiceImpl implements RecommendationService {
       throw new ApiException(
           HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authenticated candidate is required.");
     }
-    if (page < 0 || size < 1 || size > MAX_HISTORY_PAGE_SIZE) {
+    if (page < 0
+        || size < 1
+        || size > MAX_HISTORY_PAGE_SIZE
+        || (long) page * size > Integer.MAX_VALUE) {
       throw new ApiException(
           HttpStatus.BAD_REQUEST,
           "INVALID_PAGINATION",
-          "Page must be >= 0 and size must be between 1 and " + MAX_HISTORY_PAGE_SIZE + ".");
+          "Page must be >= 0, size must be between 1 and "
+              + MAX_HISTORY_PAGE_SIZE
+              + ", and page offset must fit within 32-bit bounds.");
     }
     Page<RecommendationLog> historyPage =
         logs.findHistoryByUserId(userId, PageRequest.of(page, size, HISTORY_SORT));
@@ -278,21 +283,24 @@ public class RecommendationServiceImpl implements RecommendationService {
         skillGapCount,
         toInstant(log.getRecommendationDate()),
         toInstant(log.getCreatedAt()),
-        parseSnapshot(log.getInputSnapshotJson()));
+        parseSnapshot(log.getId(), log.getInputSnapshotJson()));
   }
 
   private static Instant toInstant(OffsetDateTime dateTime) {
     return dateTime == null ? null : dateTime.toInstant();
   }
 
-  private JsonNode parseSnapshot(String rawJson) {
+  private JsonNode parseSnapshot(Long logId, String rawJson) {
     if (rawJson == null || rawJson.isBlank()) {
       return null;
     }
     try {
       return mapper.readTree(rawJson);
     } catch (JsonProcessingException ex) {
-      LOG.warn("Could not parse stored recommendation snapshot JSON");
+      LOG.warn(
+          "Could not parse recommendation snapshot JSON for log id={}: {}",
+          logId,
+          ex.getClass().getSimpleName());
       return null;
     }
   }
