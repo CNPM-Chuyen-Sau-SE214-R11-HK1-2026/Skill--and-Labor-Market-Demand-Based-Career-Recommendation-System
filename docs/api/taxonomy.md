@@ -105,8 +105,8 @@ Dữ liệu được nạp thông qua bản di chuyển Flyway `V3__seed_taxonom
 
 * **Hiển thị tại frontend (W3-T5):** Trang `/occupations/:id` hiển thị
   `marketIndicators` của kỳ mới nhất nếu có. Hợp đồng hiện tại chưa cung cấp
-  chuỗi theo thời gian hoặc phân vùng. Chế độ minh họa dùng dữ liệu riêng trong
-  [feature occupations](../../frontend/src/features/occupations/README.md).
+  chuỗi theo thời gian hoặc phân vùng. Từ W4-T5, danh mục và chi tiết luôn
+  gọi API thật; xem [feature occupations](../../frontend/src/features/occupations/README.md).
 
 ---
 

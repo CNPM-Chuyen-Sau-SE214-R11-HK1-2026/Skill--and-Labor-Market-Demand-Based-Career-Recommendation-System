@@ -1,0 +1,33 @@
+.page { width: min(1160px, 100%); margin: 0 auto; padding: clamp(16px, 3vw, 40px); box-sizing: border-box; color: var(--color-text-main); }
+.heading { margin-bottom: 24px; } .heading h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 6px 0; } .heading p, .muted { color: var(--color-text-muted); }
+.eyebrow { color: var(--color-primary); font-weight: 700; font-size: .75rem; letter-spacing: .09em; }
+.panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: clamp(12px, 2vw, 24px); margin-bottom: 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; margin-bottom: 20px; } .metric { background: white; border: 1px solid var(--color-border); border-radius: 12px; padding: 18px; } .metric strong { display: block; font-size: 1.7rem; margin-top: 8px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 18px; } .field { display: grid; gap: 5px; flex: 1; min-width: 145px; font-weight: 600; font-size: .9rem; }
+.page input, .page select, .page textarea, .dialog input, .dialog textarea, .dialog select { width: 100%; min-width: 0; box-sizing: border-box; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: white; color: #0f172a; font: inherit; font-weight: 400; }
+.page textarea { min-height: 250px; font-family: var(--font-mono); resize: vertical; }
+.button, .secondary { border: 1px solid transparent; border-radius: 7px; padding: 9px 15px; font: inherit; font-weight: 600; cursor: pointer; background: var(--color-primary); color: white; text-decoration: none; display: inline-block; } .secondary { background: white; color: #334155; border-color: #cbd5e1; } .button:disabled, .secondary:disabled { opacity: .55; cursor: not-allowed; }
+.notice, .error, .success { padding: 12px 15px; border-radius: 8px; margin: 12px 0; overflow-wrap: anywhere; } .notice { background: #fffbeb; color: #92400e; } .error { background: #fef2f2; color: #991b1b; } .success { background: #ecfdf5; color: #065f46; }
+.tableWrap { overflow-x: auto; } .table { border-collapse: collapse; width: 100%; min-width: 540px; text-align: left; } .table th, .table td { padding: 12px 10px; border-bottom: 1px solid var(--color-border); overflow-wrap: anywhere; } .table th { background: #f8fafc; font-size: .82rem; color: #475569; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+/* Restore native modal centering overridden by the global margin reset. */
+.dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(540px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  box-sizing: border-box;
+}
+.dialog::backdrop { background: #0f172a80; }
+.dialog form { display: grid; gap: 12px; min-width: 0; }
+.dialog .field { min-width: 0; }
+.dialog h2 { margin: 0; }
+.dialog textarea { min-height: 90px; }
+.page :focus-visible, .dialog :focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }

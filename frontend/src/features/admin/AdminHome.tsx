@@ -1,0 +1,4 @@
+import { Link } from 'react-router-dom';
+import styles from './Admin.module.css';
+const sections = [{ to: '/admin/lmi', title: 'Dữ liệu LMI', text: 'Nhập chỉ số nhu cầu thị trường theo lô JSON.' }, { to: '/admin/taxonomy', title: 'Danh mục nghề & kỹ năng', text: 'Tra cứu và quản lý danh mục chuẩn hóa.' }, { to: '/admin/users', title: 'Người dùng & thống kê', text: 'Kiểm tra tài khoản, trạng thái và chỉ số hệ thống.' }];
+export default function AdminHome() { return <main className={styles.page}><header className={styles.heading}><span className={styles.eyebrow}>CAREERREC · ADMIN</span><h1>Trung tâm quản trị</h1><p>Chọn phân hệ để thực hiện công việc quản trị.</p></header><div className={styles.grid}>{sections.map(s => <section className={styles.panel} key={s.to}><h2>{s.title}</h2><p>{s.text}</p><Link className={styles.button} to={s.to}>Mở phân hệ</Link></section>)}</div></main>; }

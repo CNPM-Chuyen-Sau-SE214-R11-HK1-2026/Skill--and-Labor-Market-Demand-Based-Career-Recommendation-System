@@ -356,19 +356,21 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Mô tả:** Nhập chỉ số thị trường lao động hàng loạt từ bộ dữ liệu thống kê đã kiểm duyệt.
 * **Module chịu trách nhiệm:** `admin` & `lmi`
 * **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
-* **Request Body:**
+* **Request Body:** Theo DTO thực tế `LmiImportRequest`, sử dụng envelope `items`.
+  Xem quy tắc đầy đủ tại [Hợp đồng LMI](lmi.md#21-post-apiv1adminlmiimport).
   ```json
-  [
-    {
-      "occupationCode": "SOC-15-1252",
-      "demandScore": 88.5,
-      "growthRatePct": 12.4,
-      "shortageLevel": "HIGH",
-      "openingsCount": 1250,
-      "dataPeriod": "2025-2026",
-      "sourceName": "Cục Thống kê & WEF 2025"
-    }
-  ]
+  {
+    "items": [
+      {
+        "occupationCode": "SOC-15-1252",
+        "region": "HCMC",
+        "demandScore": 88.5,
+        "growthRatePct": 12.4,
+        "openJobPostingsCount": 1250,
+        "snapshotDate": "2026-11-01"
+      }
+    ]
+  }
   ```
 * **Phản hồi thành công (`200 OK`):**
   ```json
@@ -392,3 +394,11 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
   * `GET /api/v1/admin/occupations/{id}/skills` (`200 OK`), `POST /api/v1/admin/occupations/{id}/skills` (`201 Created` / `200 OK` upsert với `skillId`, `importanceWeight` trong `[0.00, 1.00]`, `isRequired`), `PUT /api/v1/admin/occupations/{id}/skills/{skillId}` (`200 OK`), `DELETE /api/v1/admin/occupations/{id}/skills/{skillId}` hoặc `?skillId=...` (`204 No Content`).
 * **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_OCCUPATION_REQUEST`, `INVALID_SKILL_REQUEST`, `INVALID_OCCUPATION_SKILL_REQUEST`, `INVALID_PARAMETER`), `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (`RESOURCE_NOT_FOUND`), `409 Conflict` (`OCCUPATION_CODE_ALREADY_EXISTS`, `SKILL_CODE_ALREADY_EXISTS`, `OCCUPATION_SKILL_CONFLICT`).
 * **Đặc tả Request/Response chi tiết:** Xem [Hợp đồng Phân hệ Taxonomy (docs/api/taxonomy.md#3)](./taxonomy.md#3-phân-hệ-quản-trị-danh-mục-nghề-nghiệp-kỹ-năng--ánh-xạ-apiv1admin--w4-t3).
+
+---
+
+### 2.6. Tích hợp giao diện Admin W4-T5
+
+Xem [hướng dẫn nghiệm thu và hợp đồng adapter dự kiến](../development/w4-t5-admin-portal.md).
+Các DTO Users/Stats và Taxonomy ghi chưa có trong snapshot triển khai W4-T5;
+phải đối chiếu với W4-T2/W4-T3 trước khi xác nhận tích hợp thật.
