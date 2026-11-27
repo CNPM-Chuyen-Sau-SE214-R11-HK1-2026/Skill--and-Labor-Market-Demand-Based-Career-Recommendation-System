@@ -54,7 +54,7 @@ export interface OccupationDetail extends Omit<
   };
   marketIndicators: OccupationMarketIndicators | null;
   skills: OccupationSkill[];
-  // UI fixture series. The current detail API only returns marketIndicators.
+  // Optional future API series. Current backend returns marketIndicators only.
   marketTrend?: OccupationMarketPoint[];
 }
 

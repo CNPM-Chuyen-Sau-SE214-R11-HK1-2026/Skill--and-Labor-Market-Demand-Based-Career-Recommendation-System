@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { Badge } from '../../../components/common/Badge';
 import { PaginationControl } from '../../../components/common/PaginationControl';
 import { SearchBar } from '../../../components/common/SearchBar';
 import { Spinner } from '../../../components/common/Spinner';
 import { OccupationCard } from '../components/OccupationCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useOccupations } from '../hooks/useOccupations';
-import { isOccupationMockModeEnabled } from '../services/occupationService';
 import styles from './OccupationsPage.module.css';
 
 const PAGE_SIZE = 9;
@@ -47,13 +45,6 @@ export function OccupationsPage() {
           <span className={`${styles.node} ${styles.nodeThree}`}>DEV</span>
         </div>
       </section>
-
-      {isOccupationMockModeEnabled() ? (
-        <div className={styles.mockNotice} role="status">
-          <Badge tone="warning">DEMO MODE</Badge>
-          <span>Đang sử dụng dữ liệu mô phỏng để phát triển giao diện. Không dùng các chỉ số này làm dữ liệu thị trường thực tế.</span>
-        </div>
-      ) : null}
 
       <section className={styles.resultsSection} aria-labelledby="occupations-heading">
         <div className={styles.sectionHeading}>

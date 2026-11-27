@@ -327,19 +327,21 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
 * **Mô tả:** Nhập chỉ số thị trường lao động hàng loạt từ bộ dữ liệu thống kê đã kiểm duyệt.
 * **Module chịu trách nhiệm:** `admin` & `lmi`
 * **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
-* **Request Body:**
+* **Request Body:** Theo DTO thực tế `LmiImportRequest`, sử dụng envelope `items`.
+  Xem quy tắc đầy đủ tại [Hợp đồng LMI](lmi.md#21-post-apiv1adminlmiimport).
   ```json
-  [
-    {
-      "occupationCode": "SOC-15-1252",
-      "demandScore": 88.5,
-      "growthRatePct": 12.4,
-      "shortageLevel": "HIGH",
-      "openingsCount": 1250,
-      "dataPeriod": "2025-2026",
-      "sourceName": "Cục Thống kê & WEF 2025"
-    }
-  ]
+  {
+    "items": [
+      {
+        "occupationCode": "SOC-15-1252",
+        "region": "HCMC",
+        "demandScore": 88.5,
+        "growthRatePct": 12.4,
+        "openJobPostingsCount": 1250,
+        "snapshotDate": "2026-11-01"
+      }
+    ]
+  }
   ```
 * **Phản hồi thành công (`200 OK`):**
   ```json
@@ -351,3 +353,9 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
   }
   ```
 * **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`.
+
+### 2.6. Tích hợp giao diện Admin W4-T5
+
+Xem [hướng dẫn nghiệm thu và hợp đồng adapter dự kiến](../development/w4-t5-admin-portal.md).
+Các DTO Users/Stats và Taxonomy ghi chưa có trong snapshot triển khai W4-T5;
+phải đối chiếu với W4-T2/W4-T3 trước khi xác nhận tích hợp thật.

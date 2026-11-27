@@ -2,7 +2,6 @@ import { Link, useParams } from 'react-router-dom';
 import { Card } from '../../../components/common/Card';
 import { LmiChart } from '../components/LmiChart';
 import { useOccupationDetail } from '../hooks/useOccupationDetail';
-import { isOccupationMockModeEnabled } from '../services/occupationService';
 import type { OccupationDetail, OccupationSkill } from '../types/occupation.types';
 import '../occupationTheme.css';
 import styles from './OccupationDetailPage.module.css';
@@ -87,9 +86,6 @@ function DetailContent({ id }: { id: number | null }) {
 
   return (
     <div className={styles.content}>
-      {isOccupationMockModeEnabled() && (
-        <p className={styles.mockNotice}>Đang hiển thị dữ liệu minh họa.</p>
-      )}
       <header className={styles.hero}>
         <div>
           <div className={styles.category}>
