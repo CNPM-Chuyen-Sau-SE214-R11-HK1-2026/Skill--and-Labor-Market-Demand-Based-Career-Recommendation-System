@@ -21,12 +21,16 @@ Nhằm đảm bảo nguyên tắc **Single Ownership** và tránh xung đột Gi
     * `GET /profile/skills`, `POST /profile/skills`, `PUT /profile/skills/{id}`, `DELETE /profile/skills/{id}`.
     * Cơ chế trích xuất `userId` độc quyền từ `AuthenticatedUser`, bảo mật qua `@PreAuthorize("hasRole('CANDIDATE')")`.
 
-* [**`taxonomy.md`**](./taxonomy.md) *(Chủ sở hữu: **Huỳnh Long Bảo Khanh - W2-T3**)*:
+* [**`taxonomy.md`**](./taxonomy.md) *(Chủ sở hữu: **Huỳnh Long Bảo Khanh - W2-T3, W4-T3**)*:
   * **Khám phá nghề nghiệp & Danh mục Taxonomy (`/api/v1/occupations`, `/api/v1/skills`):**
     * `GET /occupations` (tìm kiếm, lọc nhóm ngành, phân trang `PageResponse`).
     * `GET /occupations/{id}` (chi tiết nghề nghiệp, kỹ năng trọng số, chỉ số LMI).
     * `GET /skills` (từ điển kỹ năng chuẩn hóa O*NET / ESCO).
     * Cơ chế truy cập công khai hoàn toàn (`permitAll()`).
+  * **Quản trị Danh mục Nghề nghiệp, Kỹ năng & Ánh xạ (`/api/v1/admin/occupations`, `/api/v1/admin/skills` - W4-T3):**
+    * `POST/PUT/DELETE /admin/occupations`, `POST/PUT/DELETE /admin/skills`, `GET/POST/PUT/DELETE /admin/occupations/{id}/skills`.
+    * `GET /admin/occupation-groups`, `GET /admin/skill-categories`.
+    * Yêu cầu vai trò `ROLE_ADMIN` (`@PreAuthorize("hasRole('ADMIN')")`).
 
 * [**`lmi.md`**](./lmi.md) *(Chủ sở hữu: **Huỳnh Long Bảo Khanh - W3-T3**)*:
   * **Quản trị & Nạp Chỉ số Thị trường Lao động (`/api/v1/admin/lmi`):**

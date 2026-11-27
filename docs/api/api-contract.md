@@ -380,3 +380,15 @@ Chi tiết triển khai và kiểm chứng: [W1-T5](../development/w1-t5-auth-gu
   }
   ```
 * **Mã lỗi dự kiến:** `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`.
+
+---
+
+#### Quản trị Danh mục Nghề nghiệp, Kỹ năng & Ánh xạ (`/api/v1/admin/occupations*`, `/api/v1/admin/skills*` — `W4-T3`)
+* **Module chịu trách nhiệm:** `taxonomy` (`AdminTaxonomyController`)
+* **Quyền truy cập:** Yêu cầu vai trò Quản trị viên (`ROLE_ADMIN`)
+* **Danh mục endpoints:**
+  * `POST /api/v1/admin/occupations` (`201 Created`), `PUT /api/v1/admin/occupations/{id}` (`200 OK`), `DELETE /api/v1/admin/occupations/{id}` (`204 No Content`), `GET /api/v1/admin/occupation-groups` (`200 OK`).
+  * `POST /api/v1/admin/skills` (`201 Created`), `PUT /api/v1/admin/skills/{id}` (`200 OK`), `DELETE /api/v1/admin/skills/{id}` (`204 No Content`), `GET /api/v1/admin/skill-categories` (`200 OK`).
+  * `GET /api/v1/admin/occupations/{id}/skills` (`200 OK`), `POST /api/v1/admin/occupations/{id}/skills` (`201 Created` / `200 OK` upsert với `skillId`, `importanceWeight` trong `[0.00, 1.00]`, `isRequired`), `PUT /api/v1/admin/occupations/{id}/skills/{skillId}` (`200 OK`), `DELETE /api/v1/admin/occupations/{id}/skills/{skillId}` hoặc `?skillId=...` (`204 No Content`).
+* **Mã lỗi dự kiến:** `400 Bad Request` (`INVALID_OCCUPATION_REQUEST`, `INVALID_SKILL_REQUEST`, `INVALID_OCCUPATION_SKILL_REQUEST`, `INVALID_PARAMETER`), `401 Unauthorized`, `403 Forbidden`, `404 Not Found` (`RESOURCE_NOT_FOUND`), `409 Conflict` (`OCCUPATION_CODE_ALREADY_EXISTS`, `SKILL_CODE_ALREADY_EXISTS`, `OCCUPATION_SKILL_CONFLICT`).
+* **Đặc tả Request/Response chi tiết:** Xem [Hợp đồng Phân hệ Taxonomy (docs/api/taxonomy.md#3)](./taxonomy.md#3-phân-hệ-quản-trị-danh-mục-nghề-nghiệp-kỹ-năng--ánh-xạ-apiv1admin--w4-t3).
