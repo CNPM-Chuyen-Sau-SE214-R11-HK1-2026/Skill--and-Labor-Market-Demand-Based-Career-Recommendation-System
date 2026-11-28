@@ -38,6 +38,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a private random UTF-8 secret of at least 32 bytes}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+
+      # W4-T6: Enable demo accounts only when explicitly requested.
+      # Default OFF; do not use the flag on production databases.
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-career_recommendation_db}?options=-c%20w4.demo_accounts_enabled%3D${W4_DEMO_ACCOUNTS_ENABLED:-off}"
+
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:

@@ -1,6 +1,6 @@
 
-# W3-T6 - Backend, Frontend and Full Week 3 Integration
-name: CI - Backend, Frontend and Week 3 Integration
+# W4-T6 - Backend, Frontend, Week 3 and Week 4 E2E Integration
+name: CI - Backend, Frontend and W3-W4 Integration
 
 on:
   push:
@@ -90,11 +90,15 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-  # JOB 3: Full end-to-end API integration using Docker Compose
+  # JOB 3: Week 3 and Week 4 Docker E2E
   week3-integration:
-    name: Week 3 - Docker API Integration (Full E2E)
+    name: Week 3 + Week 4 - Docker API Integration
     runs-on: ubuntu-latest
     timeout-minutes: 45
+
+    # Demo accounts are enabled only for this CI test job.
+    env:
+      W4_DEMO_ACCOUNTS_ENABLED: "on"
 
     steps:
       - name: Checkout source
@@ -122,6 +126,7 @@ jobs:
           docker compose up -d --no-build --wait
           docker compose ps
 
+      # Verify Week 3 Flyway V4 and LMI seed data
       - name: Verify Flyway V4 seed data
         shell: bash
         run: |
@@ -151,17 +156,73 @@ jobs:
 
           echo "PASS: Flyway V4 and LMI seed data verified."
 
+      # Keep the original Week 3 E2E test
       - name: Run full W3-T6 API integration tests
         shell: bash
         run: |
           set -euo pipefail
           pwsh -NoProfile -NonInteractive -File scripts/test-week3-integration.ps1
 
+      # Week 4: Check Flyway V5, demo users and frontend
+      - name: Verify Flyway V5 and demo accounts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          db_user=$(docker compose exec -T postgres printenv POSTGRES_USER)
+          db_name=$(docker compose exec -T postgres printenv POSTGRES_DB)
+
+          result=$(docker compose exec -T postgres \
+            psql -U "$db_user" -d "$db_name" \
+            -v ON_ERROR_STOP=1 -tAc "
+              SELECT
+                (SELECT COUNT(*) FROM flyway_schema_history
+                 WHERE version = '5' AND success = true),
+                (SELECT COUNT(*) FROM users
+                 WHERE email IN (
+                   'w4-demo-candidate@demo.invalid',
+                   'w4-demo-admin@demo.invalid'
+                 ) AND is_active = true);
+            ")
+
+          echo "Flyway V5 | Active demo accounts: $result"
+
+          if [[ "$result" != "1|2" ]]; then
+            echo "FAIL: Flyway V5 or demo accounts missing."
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            http://127.0.0.1:3000/ > /dev/null
+
+          echo "PASS: Flyway V5, demo accounts and frontend."
+
+      # Week 4: Install Python for E2E testing
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Week 4: Automated E2E test
+      - name: Run W4-T6 E2E baseline
+        shell: bash
+        env:
+          W4_DEMO_CANDIDATE_PASSWORD: "CandidateDemoW4!2026"
+          W4_DEMO_ADMIN_PASSWORD: "AdminDemoW4!2026"
+        run: |
+          set -euo pipefail
+
+          python --version
+          python -m py_compile scripts/test-week4-e2e.py
+          python scripts/test-week4-e2e.py
+
+      # Diagnostics when a CI step fails
       - name: Show Docker logs on failure
         if: failure()
         shell: bash
         run: docker compose logs --tail=150
 
+      # Stop containers without deleting the database volume
       - name: Stop CI containers
         if: always()
         shell: bash
