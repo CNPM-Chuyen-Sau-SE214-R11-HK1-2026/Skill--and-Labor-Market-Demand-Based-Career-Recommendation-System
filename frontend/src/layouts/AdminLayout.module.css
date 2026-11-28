@@ -98,3 +98,8 @@
   display: flex;
   flex-direction: column;
 }
+
+.navLink[aria-current="page"] { color: #ffffff; text-decoration: underline; text-underline-offset: 5px; }
+.headerContainer { flex-wrap: wrap; gap: 12px; }
+.navGroup { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 760px) { .adminHeader { padding: 12px; } .navGroup { order: 3; width: 100%; } .userGroup { flex-wrap: wrap; } }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import styles from './AdminLayout.module.css';
 
@@ -20,16 +20,12 @@ export const AdminLayout: React.FC = () => {
             <span className={styles.adminBadge}>Admin Portal</span>
           </div>
 
-          <nav className={styles.navGroup}>
-            <Link to="/" className={styles.navLink}>
-              Trang chủ
-            </Link>
-            <Link to="/occupations" className={styles.navLink}>
-              Khám phá nghề nghiệp
-            </Link>
-            <Link to="/dashboard" className={styles.navLink}>
-              Bảng điều khiển
-            </Link>
+          <nav className={styles.navGroup} aria-label="Điều hướng quản trị">
+            <NavLink end to="/admin" className={styles.navLink}>Tổng quan</NavLink>
+            <NavLink to="/admin/lmi" className={styles.navLink}>LMI</NavLink>
+            <NavLink to="/admin/taxonomy" className={styles.navLink}>Danh mục</NavLink>
+            <NavLink to="/admin/users" className={styles.navLink}>Người dùng</NavLink>
+            <Link to="/occupations" className={styles.navLink}>Tra cứu nghề</Link>
           </nav>
 
           <div className={styles.userGroup}>
