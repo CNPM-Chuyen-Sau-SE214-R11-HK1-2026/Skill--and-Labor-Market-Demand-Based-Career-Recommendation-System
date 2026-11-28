@@ -1,11 +1,16 @@
 package com.cnpm.careerrecommendation.module.recommendation;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.cnpm.careerrecommendation.common.dto.PageResponse;
 import com.cnpm.careerrecommendation.common.entity.Role;
 import com.cnpm.careerrecommendation.common.exception.ApiException;
 import com.cnpm.careerrecommendation.common.exception.GlobalExceptionHandler;
@@ -19,7 +24,10 @@ import com.cnpm.careerrecommendation.config.SecurityConfig;
 import com.cnpm.careerrecommendation.module.recommendation.controller.RecommendationController;
 import com.cnpm.careerrecommendation.module.recommendation.dto.*;
 import com.cnpm.careerrecommendation.module.recommendation.service.RecommendationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.MalformedJwtException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +37,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(RecommendationController.class)
@@ -128,6 +137,180 @@ class RecommendationControllerTest {
     mvc.perform(get("/api/v1/recommendations/44/skill-gap").with(candidate()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.status").value(404));
+  }
+
+  @Test
+  void candidateGetsPaginatedHistory() throws Exception {
+    var snapshot = new ObjectMapper().readTree("{\"limit\":10,\"userSkillIds\":[1]}");
+    var item =
+        new RecommendationHistoryItemResponse(
+            55L,
+            101L,
+            "SOC-15-1252",
+            "Software Developer",
+            "IT",
+            new BigDecimal("88.50"),
+            2,
+            Instant.parse("2026-11-25T10:15:30Z"),
+            Instant.parse("2026-11-25T10:15:31Z"),
+            snapshot);
+    when(service.getRecommendationHistory(7L, 0, 20))
+        .thenReturn(PageResponse.of(List.of(item), 0, 20, 1, 1));
+
+    mvc.perform(get("/api/v1/recommendations/history").with(candidate()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(55))
+        .andExpect(jsonPath("$.content[0].occupationId").value(101))
+        .andExpect(jsonPath("$.content[0].occupationCode").value("SOC-15-1252"))
+        .andExpect(jsonPath("$.content[0].occupationTitle").value("Software Developer"))
+        .andExpect(jsonPath("$.content[0].groupName").value("IT"))
+        .andExpect(jsonPath("$.content[0].matchScore").value(88.5))
+        .andExpect(jsonPath("$.content[0].skillGapCount").value(2))
+        .andExpect(jsonPath("$.content[0].recommendationDate").value("2026-11-25T10:15:30Z"))
+        .andExpect(jsonPath("$.content[0].createdAt").value("2026-11-25T10:15:31Z"))
+        .andExpect(jsonPath("$.content[0].inputSnapshot.limit").value(10))
+        .andExpect(jsonPath("$.pageNumber").value(0))
+        .andExpect(jsonPath("$.pageSize").value(20))
+        .andExpect(jsonPath("$.totalElements").value(1))
+        .andExpect(jsonPath("$.totalPages").value(1))
+        .andExpect(jsonPath("$.last").value(true));
+
+    verify(service).getRecommendationHistory(7L, 0, 20);
+  }
+
+  @Test
+  void candidateGetsEmptyHistoryPage() throws Exception {
+    when(service.getRecommendationHistory(7L, 0, 20))
+        .thenReturn(PageResponse.of(List.of(), 0, 20, 0, 0));
+
+    mvc.perform(get("/api/v1/recommendations/history").with(candidate()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content").isEmpty())
+        .andExpect(jsonPath("$.totalElements").value(0))
+        .andExpect(jsonPath("$.last").value(true));
+  }
+
+  @Test
+  void historyForwardsCustomPagination() throws Exception {
+    when(service.getRecommendationHistory(7L, 1, 5))
+        .thenReturn(PageResponse.of(List.of(), 1, 5, 0, 0));
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("page", "1")
+                .param("size", "5")
+                .with(candidate()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.pageNumber").value(1))
+        .andExpect(jsonPath("$.pageSize").value(5));
+
+    verify(service).getRecommendationHistory(7L, 1, 5);
+  }
+
+  @Test
+  void historyIgnoresUserIdQueryParamToPreventIdor() throws Exception {
+    when(service.getRecommendationHistory(7L, 0, 20))
+        .thenReturn(PageResponse.of(List.of(), 0, 20, 0, 0));
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("userId", "999")
+                .with(candidate()))
+        .andExpect(status().isOk());
+
+    verify(service).getRecommendationHistory(7L, 0, 20);
+    verify(service, never()).getRecommendationHistory(eq(999L), anyInt(), anyInt());
+  }
+
+  @Test
+  void historyRequiresCandidateRole() throws Exception {
+    mvc.perform(get("/api/v1/recommendations/history"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401));
+
+    when(jwt.parseToken("invalid-token")).thenThrow(new MalformedJwtException("invalid"));
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .header("Authorization", "Bearer invalid-token"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401));
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .with(
+                    authentication(
+                        new UsernamePasswordAuthenticationToken(
+                            new AuthenticatedUser(8L, "admin", Role.ROLE_ADMIN),
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))))))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.status").value(403));
+
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void historyRejectsInvalidPagination() throws Exception {
+    when(service.getRecommendationHistory(7L, -1, 20))
+        .thenThrow(
+            new ApiException(
+                HttpStatus.BAD_REQUEST,
+                "INVALID_PAGINATION",
+                "Page must be >= 0 and size must be between 1 and 100."));
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("page", "-1")
+                .with(candidate()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("INVALID_PAGINATION"));
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("page", "abc")
+                .with(candidate()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.timestamp").isString())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("INVALID_PARAMETER"))
+        .andExpect(jsonPath("$.message").value("Invalid value for parameter 'page'."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    mvc.perform(
+            get("/api/v1/recommendations/history")
+                .param("size", "99999999999")
+                .with(candidate()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.timestamp").isString())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("INVALID_PARAMETER"))
+        .andExpect(jsonPath("$.message").value("Invalid value for parameter 'size'."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    verify(service).getRecommendationHistory(7L, -1, 20);
+    verifyNoMoreInteractions(service);
+  }
+
+  @Test
+  @WithMockUser(roles = "CANDIDATE")
+  void historyRejectsNonAuthenticatedUserPrincipal() throws Exception {
+    mvc.perform(get("/api/v1/recommendations/history"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.timestamp").isString())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.error").value("UNAUTHORIZED"))
+        .andExpect(jsonPath("$.message").value("Authenticated candidate is required."))
+        .andExpect(jsonPath("$.path").value("/api/v1/recommendations/history"))
+        .andExpect(jsonPath("$.errors").isArray())
+        .andExpect(jsonPath("$.errors").isEmpty());
+
+    verifyNoInteractions(service);
   }
 
   private org.springframework.test.web.servlet.request.RequestPostProcessor candidate() {

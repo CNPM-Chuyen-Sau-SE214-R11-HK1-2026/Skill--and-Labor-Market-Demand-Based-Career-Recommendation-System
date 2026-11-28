@@ -4,25 +4,34 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.cnpm.careerrecommendation.common.dto.PageResponse;
 import com.cnpm.careerrecommendation.common.entity.Skill;
 import com.cnpm.careerrecommendation.common.exception.ApiException;
 import com.cnpm.careerrecommendation.common.exception.ResourceNotFoundException;
 import com.cnpm.careerrecommendation.common.repository.UserRepository;
 import com.cnpm.careerrecommendation.entity.*;
+import com.cnpm.careerrecommendation.module.recommendation.dto.RecommendationHistoryItemResponse;
 import com.cnpm.careerrecommendation.module.recommendation.service.*;
 import com.cnpm.careerrecommendation.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -151,6 +160,148 @@ class RecommendationServiceImplTest {
     assertEquals(0, gap.matchPercentage());
     assertTrue(gap.matchedSkills().isEmpty());
     assertEquals(1, gap.missingEssentialSkills().size());
+  }
+
+  @Test
+  @DisplayName("History queries newest-first paginated logs and parses JSON snapshot")
+  void historyReturnsNewestFirstPageMappedFromLogs() {
+    OccupationGroup group = new OccupationGroup("15-0000", "Information Technology", null);
+    Occupation o = new Occupation("SOC-15-1252", "Software Developer", "IT", group);
+    o.setId(101L);
+    OffsetDateTime recDate = OffsetDateTime.parse("2026-11-25T10:15:30Z");
+    OffsetDateTime created = OffsetDateTime.parse("2026-11-25T10:15:31Z");
+    RecommendationLog log =
+        new RecommendationLog(
+            null,
+            o,
+            new BigDecimal("88.50"),
+            2,
+            "{\"limit\":10,\"userSkillIds\":[1,2]}");
+    log.setId(55L);
+    log.setRecommendationDate(recDate);
+    log.setCreatedAt(created);
+
+    when(logs.findHistoryByUserId(eq(7L), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(log), PageRequest.of(0, 20), 1));
+
+    PageResponse<RecommendationHistoryItemResponse> page =
+        service.getRecommendationHistory(7L, 0, 20);
+
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+    verify(logs).findHistoryByUserId(eq(7L), pageableCaptor.capture());
+    Pageable captured = pageableCaptor.getValue();
+    assertEquals(0, captured.getPageNumber());
+    assertEquals(20, captured.getPageSize());
+    assertEquals(
+        List.of(Sort.Order.desc("recommendationDate"), Sort.Order.desc("id")),
+        captured.getSort().toList());
+
+    assertEquals(1, page.content().size());
+    assertEquals(0, page.pageNumber());
+    assertEquals(20, page.pageSize());
+    assertEquals(1L, page.totalElements());
+    assertEquals(1, page.totalPages());
+    assertTrue(page.last());
+
+    RecommendationHistoryItemResponse item = page.content().get(0);
+    assertEquals(55L, item.id());
+    assertEquals(101L, item.occupationId());
+    assertEquals("SOC-15-1252", item.occupationCode());
+    assertEquals("Software Developer", item.occupationTitle());
+    assertEquals("Information Technology", item.groupName());
+    assertEquals(new BigDecimal("88.50"), item.matchScore());
+    assertEquals(2, item.skillGapCount());
+    assertEquals(Instant.parse("2026-11-25T10:15:30Z"), item.recommendationDate());
+    assertEquals(Instant.parse("2026-11-25T10:15:31Z"), item.createdAt());
+    assertNotNull(item.inputSnapshot());
+    assertEquals(10, item.inputSnapshot().get("limit").asInt());
+    assertEquals(1, item.inputSnapshot().get("userSkillIds").get(0).asInt());
+  }
+
+  @Test
+  @DisplayName("History safely handles null group, null/blank snapshot, and malformed JSON")
+  void historyHandlesNullGroupNullSnapshotAndMalformedSnapshot() {
+    Occupation o = occ(102L, "Systems Analyst");
+    RecommendationLog nullSnapshot =
+        new RecommendationLog(null, o, new BigDecimal("70.00"), 1, null);
+    nullSnapshot.setId(1L);
+    RecommendationLog blankSnapshot =
+        new RecommendationLog(null, o, new BigDecimal("75.00"), null, "   ");
+    blankSnapshot.setId(2L);
+    blankSnapshot.setSkillGapCount(null);
+    RecommendationLog malformedSnapshot =
+        new RecommendationLog(null, o, new BigDecimal("80.00"), 0, "{not-valid-json");
+    malformedSnapshot.setId(3L);
+
+    when(logs.findHistoryByUserId(eq(7L), any(Pageable.class)))
+        .thenReturn(
+            new PageImpl<>(
+                List.of(nullSnapshot, blankSnapshot, malformedSnapshot),
+                PageRequest.of(0, 20),
+                3));
+
+    PageResponse<RecommendationHistoryItemResponse> page =
+        service.getRecommendationHistory(7L, 0, 20);
+
+    assertEquals(3, page.content().size());
+    assertNull(page.content().get(0).groupName());
+    assertNull(page.content().get(0).inputSnapshot());
+    assertEquals(0, page.content().get(1).skillGapCount());
+    assertNull(page.content().get(1).inputSnapshot());
+    assertNull(page.content().get(2).inputSnapshot());
+  }
+
+  @Test
+  @DisplayName("History returns empty PageResponse when candidate has no logs")
+  void historyReturnsEmptyPageWhenNoLogsExist() {
+    when(logs.findHistoryByUserId(eq(7L), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+    PageResponse<RecommendationHistoryItemResponse> page =
+        service.getRecommendationHistory(7L, 0, 20);
+
+    assertTrue(page.content().isEmpty());
+    assertEquals(0L, page.totalElements());
+    assertEquals(0, page.totalPages());
+    assertTrue(page.last());
+  }
+
+  @Test
+  @DisplayName("History rejects invalid page, size bounds, and offset overflow before querying repository")
+  void historyRejectsInvalidPagination() {
+    for (int[] pair : new int[][] {{-1, 20}, {0, 0}, {0, 101}, {107374183, 20}}) {
+      ApiException ex =
+          assertThrows(
+              ApiException.class,
+              () -> service.getRecommendationHistory(7L, pair[0], pair[1]));
+      assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+      assertEquals("INVALID_PAGINATION", ex.getErrorCode());
+    }
+    verifyNoInteractions(logs);
+  }
+
+  @Test
+  @DisplayName("History rejects null userId before querying repository")
+  void historyRejectsNullUserId() {
+    ApiException ex =
+        assertThrows(
+            ApiException.class, () -> service.getRecommendationHistory(null, 0, 20));
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatus());
+    assertEquals("UNAUTHORIZED", ex.getErrorCode());
+    verifyNoInteractions(logs);
+  }
+
+  @Test
+  @DisplayName("History queries strictly scope by authenticated userId")
+  void historyScopesStrictlyToRequestedUserId() {
+    when(logs.findHistoryByUserId(anyLong(), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+    service.getRecommendationHistory(7L, 0, 10);
+    service.getRecommendationHistory(8L, 1, 5);
+
+    verify(logs).findHistoryByUserId(eq(7L), any(Pageable.class));
+    verify(logs).findHistoryByUserId(eq(8L), any(Pageable.class));
   }
 
   private static Skill skill(Long id, String name) {
